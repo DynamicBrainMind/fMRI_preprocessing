@@ -1,0 +1,118 @@
+#! /bin/bash -f
+# Written by Aaron Kucyi
+
+# Required inputs:
+# 1. Path to dataset folder (parent folder containing subject>session>run subfolders)
+# 2. Name of folder containing organized data (in bids or bids-like format)
+# 3. Subject name
+# 4. Session name
+# 5. Run name
+
+# T1 data should be in "anat" subfolder within subject folder and named "anat.nii.gz"
+# All scripts should be in a folder called "scripts" within the parent folder containing subject folders
+# ICA-AROMA-master folder should be within "scripts" folder
+# Dependencies: FSL, freesurfer, python2.7, ICA-AROMA-master folder
+# Other files needed: Prestats_AROMA.fsf
+
+## Initate inputs, paths and output paths
+path=$1
+data_folder=$2
+sub=$3
+session=$4
+run=$5
+mkdir -p ${path}/derivatives
+mkdir -p ${path}/derivatives/${sub}
+mkdir -p ${path}/derivatives/${sub}/${session}
+mkdir -p ${path}/derivatives/${sub}/${session}/anat
+mkdir -p ${path}/derivatives/${sub}/${session}/func
+func_path=${path}/${data_folder}/${sub}/${session}/func
+output_path=${path}/derivatives/${sub}/${session}
+echo "path to subject/session is $1/$2/$3"
+echo "output path is set to $output_path"
+
+cd ${path}/${data_folder}/${sub}/${session}
+
+## Segment T1 into WM, CSF, GM (if not already done)
+if [ ! -f ${output_path}/anat/anat_brain.nii.gz ]; then
+	echo "performing brain extraction for ${sub} ${session}"
+	bet anat/anat ${output_path}/anat/anat_brain -B -f 0.25 -g 0
+	echo "performing FAST segmentation for ${sub} ${session}"
+	fast -t 1 -g -o ${output_path}/anat/anat_brain.nii.gz
+	echo "done FAST segmentation"
+else
+	echo "skipping segmentation (already done)"
+fi
+
+## Set up Pre-AROMA FEAT preprocessing template
+cd ${func_path}
+run_file=$(find $run*)
+echo "Creating FSF file for AROMA subject: " $sub
+cd ${path}/scripts
+sed -e "s/####SUBJECT####/${sub}/g" Prestats_AROMA.fsf > temp.fsf
+sed -e "s/####SESSION####/${session}/g" temp.fsf > temp2.fsf
+sed -e "s/####RUN####/${run}/g" temp2.fsf > temp3.fsf
+tr=`mri_info ${func_path}/$run_file --tr`
+tr=$(echo "scale=3 ; $tr / 1000" | bc)
+volumes=`mri_info ${func_path}/$run_file --nframes`
+sed -e "s/####TR####/${tr}/g" temp3.fsf > temp4.fsf
+sed -e "s/####VOLUMES####/${volumes}/g" temp4.fsf > temp5.fsf
+sed -e "s+####PATH####+${path}+g" temp5.fsf > temp6.fsf
+sed -e "s+####FUNCDIR####+${func_path}+g" temp6.fsf > temp7.fsf
+sed -e "s/####VOLUMES####/${volumes}/g" temp7.fsf > ${sub}_Prestats_AROMA_${run}.fsf
+mv ${sub}_Prestats_AROMA_${run}.fsf ${output_path}/func
+rm -f temp.fsf temp2.fsf temp3.fsf temp4.fsf temp5.fsf temp6.fsf temp7.fsf
+echo "done making FEAT setup for ${sub} ${run}"
+
+## Run FEAT for pre-AROMA
+echo "running Pre-AROMA FEAT preprocessing"
+cd ${output_path}/func
+feat ${sub}_Prestats_AROMA_${run}.fsf
+echo "done FEAT for AROMA pipeline, ${sub} ${run}: check registration and motion"
+
+# Run ICA
+cd ${path}/scripts
+python2.7 ICA-AROMA-master/ICA_AROMA.py -feat ${output_path}/func/Prestats_AROMA_${run}.feat -out ${output_path}/func/Prestats_AROMA_${run}.feat/ICA_AROMA
+echo "done ICA for ${sub} ${run}"
+
+## Threshold WM and CSF volumes (set WM and CSF volumes to 198000 and 20000)
+cd ${output_path}/anat
+# register WM and CSF to func
+flirt -in anat_brain_pve_0.nii.gz -ref ${output_path}/func/Prestats_AROMA_${run}.feat/example_func.nii.gz -applyxfm -init ${output_path}/func/Prestats_AROMA_${run}.feat/reg/highres2example_func.mat -out ${output_path}/func/CSF_func_${run}
+flirt -in anat_brain_pve_2.nii.gz -ref ${output_path}/func/Prestats_AROMA_${run}.feat/example_func.nii.gz -applyxfm -init ${output_path}/func/Prestats_AROMA_${run}.feat/reg/highres2example_func.mat -out ${output_path}/func/WM_func_${run}
+final_wm_vol=198000
+final_csf_vol=20000
+cd ${output_path}/func
+# get volume of unthresholded WM and CSF
+wm_vol=`fslstats WM_func_${run} -V` 
+csf_vol=`fslstats CSF_func_${run} -V`
+wm_vol=$(echo $wm_vol | awk '{print $2}')
+csf_vol=$(echo $csf_vol | awk '{print $2}')
+# get % of voxels in WM and CSF volumes to retain and set intensity threshold
+wm_retain=$(echo "scale=5 ; $final_wm_vol / $wm_vol" | bc)
+csf_retain=$(echo "scale=5 ; $final_csf_vol / $csf_vol" | bc)
+wm_cutoff=$(echo "scale=5 ; 100-($wm_retain*100)" | bc)
+csf_cutoff=$(echo "scale=5 ; 100-($csf_retain*100)" | bc)
+wm_thr=`fslstats WM_func_${run} -P $wm_cutoff`
+csf_thr=`fslstats CSF_func_${run} -P $csf_cutoff`
+# compute and output thresholded WM and CSF volumes
+fslmaths WM_func_${run} -thr $wm_thr -bin WM_thr_${run}
+fslmaths CSF_func_${run} -thr $csf_thr -bin CSF_thr_${run}
+
+# regress out WM & CSF (AROMA pipeline)
+cd ${output_path}/func
+
+fslmeants -i Prestats_AROMA_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -o WM_AROMA_${run}.txt -m WM_thr_${run}
+echo "done extracting WM"
+
+fslmeants -i Prestats_AROMA_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -o CSF_AROMA_${run}.txt -m CSF_thr_${run}
+echo "done extracting CSF"
+
+fsl_regfilt -i  Prestats_AROMA_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -d  WM_AROMA_${run}.txt -o WM_${run}_AROMA -f "1"
+echo "done regressing out WM"
+
+fsl_regfilt -i  WM_${run}_AROMA -d  CSF_AROMA_${run}.txt -o AROMA_${run} -f "1"
+echo "done regressing out CSF"
+rm -f WM_${run}_AROMA.nii.gz
+echo "done ICA-AROMA preprocessing for ${sub} ${session} ${run} !"
+
+
