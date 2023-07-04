@@ -47,7 +47,7 @@ fi
 cd ${func_path}
 run_file=$(find $run*)
 echo "Creating FSF file for AROMA subject: " $sub
-cd ${path}/scripts
+cd ${path}/scripts/fMRI_preprocessing
 sed -e "s/####SUBJECT####/${sub}/g" Prestats_AROMA.fsf > temp.fsf
 sed -e "s/####SESSION####/${session}/g" temp.fsf > temp2.fsf
 sed -e "s/####RUN####/${run}/g" temp2.fsf > temp3.fsf
@@ -70,7 +70,7 @@ feat ${sub}_Prestats_AROMA_${run}.fsf
 echo "done FEAT for AROMA pipeline, ${sub} ${run}: check registration and motion"
 
 # Run ICA
-cd ${path}/scripts
+cd ${path}/scripts/fMRI_preprocessing
 python2.7 ICA-AROMA-master/ICA_AROMA.py -feat ${output_path}/func/Prestats_AROMA_${run}.feat -out ${output_path}/func/Prestats_AROMA_${run}.feat/ICA_AROMA
 echo "done ICA for ${sub} ${run}"
 
