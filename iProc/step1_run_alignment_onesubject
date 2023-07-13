@@ -1,0 +1,68 @@
+#! /bin/bash -f
+# Written by Aaron Kucyi
+# compatible with BIDS or BIDS-like organized data
+
+# Required inputs:
+# 1. Path to dataset folder (parent folder containing subject>session>run subfolders)
+# 2. Name of folder containing organized data (in bids or bids-like format)
+# 3. Subject name
+
+## Initate inputs, paths and output paths
+path=$1
+data_folder=$2
+sub=$3
+mkdir -p ${path}/derivatives
+mkdir -p ${path}/derivatives/${sub}
+mkdir -p ${path}/derivatives/${sub}/iProc
+rm -r -f ${path}/derivatives/${sub}/iProc/bold_template
+mkdir -p ${path}/derivatives/${sub}/iProc/bold_template
+
+## get sessions
+cd ${path}/${data_folder}/${sub}
+sessions=`printf '%s\n' * | paste -sd " "`
+
+## compute mean within each run in each session
+for session in $sessions
+do
+mkdir -p ${path}/derivatives/${sub}/iProc/${session}
+mkdir -p ${path}/derivatives/${sub}/iProc/${session}/func
+# get nifti files for each run in this session
+cd ${path}/${data_folder}/${sub}/${session}/func
+runs=`find *nii* | paste -sd " "`
+# loop through runs
+for run in $runs
+do
+fslmaths ${path}/${data_folder}/${sub}/${session}/func/${run} -Tmean ${path}/derivatives/${sub}/iProc/bold_template/${session}_${run}_mean
+echo "done computing mean for ${sub} ${session} ${run}"
+done
+done
+
+## concatenate run means then compute mean of all
+fslmerge -t ${path}/derivatives/${sub}/iProc/bold_template/means_concat `ls ${path}/derivatives/${sub}/iProc/bold_template/*`
+echo "done merging all runs"
+fslmaths ${path}/derivatives/${sub}/iProc/bold_template/means_concat -Tmean ${path}/derivatives/${sub}/iProc/bold_template/mean_bold_template
+echo "done computing mean template"
+
+## remove intermediate files
+rm -f ${path}/derivatives/${sub}/iProc/bold_template/*mean.nii.gz ${path}/derivatives/${sub}/iProc/bold_template/means_concat.nii.gz
+
+## head motion correction and registration to bold template for each run
+for session in $sessions
+do
+cd ${path}/${data_folder}/${sub}/${session}/func
+runs=`find *nii* | paste -sd " "`
+for run in $runs
+do
+# motion correction
+mcflirt -in ${path}/${data_folder}/${sub}/${session}/func/${run} -out ${path}/derivatives/${sub}/iProc/${session}/func/${run%.*}_mcf -mats -plots -rmsrel -rmsabs -spline_final
+echo "done motion correction for ${sub} ${session} ${run}"
+# register to bold template
+flirt -in ${path}/derivatives/${sub}/iProc/${session}/func/${run%.*}_mcf -ref ${path}/derivatives/${sub}/iProc/bold_template/mean_bold_template.nii.gz -out ${path}/derivatives/${sub}/iProc/${session}/func/${run%.*}_template.nii.gz -omat ${path}/derivatives/${sub}/iProc/${session}/func/${run%.*}_mcf2meanbold.mat -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12  -interp trilinear
+echo "done registering to bold template"
+# transform to bold template
+flirt -in ${path}/derivatives/${sub}/iProc/${session}/func/${run%.*}_mcf -ref ${path}/derivatives/${sub}/iProc/bold_template/mean_bold_template.nii.gz -out ${path}/derivatives/${sub}/iProc/${session}/func/${run%.*}_mcf_template.nii.gz -applyxfm -init ${path}/derivatives/${sub}/iProc/${session}/func/${run%.*}_mcf2meanbold.mat -interp trilinear
+echo "done transforming ${sub} ${session} ${run} to bold template"
+done
+done
+
+

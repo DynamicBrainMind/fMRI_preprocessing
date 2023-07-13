@@ -1,0 +1,65 @@
+#! /bin/bash -f
+# Written by Aaron Kucyi
+# compatible with BIDS or BIDS-like organized data
+
+# TO DO: replace session and run variables with input text files containing lists created for each subject
+
+# Required inputs:
+# 1. Path to dataset folder (parent folder containing subject>session>run subfolders)
+# 2. Name of folder containing organized data (in bids or bids-like format)
+# 3. Subject name
+# 4. Session: Name of func session to process (all runs in this session)
+# 5. Anat session: Name of session to use for anatomical scan (for registration of all func runs/session)
+
+## Initate inputs, paths and output paths
+path=$1
+data_folder=$2
+sub=$3
+session=$4
+anat_session=$5
+func_path=${path}/derivatives/${sub}/iProc/${session}/func
+
+## run high-pass filtering and registration (using FEAT)
+cd ${func_path}
+runs=`find *mcf_template.nii* | paste -sd " "`
+for run in $runs
+do
+run_file=${run}
+run=${run%_mcf_template.*}
+echo "Creating FSF file for high-pass filtering for $sub $session $run"
+cd ${path}/scripts/fMRI_preprocessing/iProc
+sed -e "s/####SUBJECT####/${sub}/g" highpass.fsf > temp.fsf
+sed -e "s/####SESSION####/${session}/g" temp.fsf > temp2.fsf
+sed -e "s/####RUN####/${run}/g" temp2.fsf > temp3.fsf
+tr=`fslinfo ${func_path}/$run_file | grep "^pixdim4" | awk '{print $2}'`
+echo "TR = ${tr}"
+volumes=`fslinfo ${func_path}/$run_file | grep "^dim4" | awk '{print $2}'`
+echo "n volumes = ${volumes}"
+sed -e "s/####TR####/${tr}/g" temp3.fsf > temp4.fsf
+sed -e "s/####VOLUMES####/${volumes}/g" temp4.fsf > temp5.fsf
+sed -e "s+####PATH####+${path}+g" temp5.fsf > temp6.fsf
+sed -e "s+####FUNCDIR####+${func_path}+g" temp6.fsf > temp7.fsf
+sed -e "s+####ANATSESSION####+${anat_session}+g" temp7.fsf > temp8.fsf
+sed -e "s/####VOLUMES####/${volumes}/g" temp8.fsf > ${sub}_highpass_${run}.fsf
+mv ${sub}_highpass_${run}.fsf ${func_path}
+rm -f temp.fsf temp2.fsf temp3.fsf temp4.fsf temp5.fsf temp6.fsf temp7.fsf temp8.fsf
+echo "running high-pass FEAT for ${sub} ${session} ${run}"
+cd ${func_path}
+feat ${sub}_highpass_${run}.fsf
+echo "done FEAT high-pass filtering and registration for ${sub} ${session} ${run}"
+
+## Transform to MNI space
+flirt -in Prestats_AROMA_${run}.feat/highpass.feat/filtered_func_data -ref ${path}/scripts/fMRI_preprocessing/MNI152_T1_2mm_brain -out ${sub}_AROMA_MNI_${run} -applyxfm -init Prestats_AROMA_${run}.feat/highpass.feat/reg/example_func2standard.mat -interp trilinear
+echo "done transforming preprocessed data to standard space"
+
+## Compute percent signal change
+cd ${func_path}
+fslmaths ${sub}_AROMA_MNI_${run}.nii.gz -Tmean mean_${run}.nii.gz
+fslmaths ${sub}_AROMA_MNI_${run}.nii.gz -sub mean_${run}.nii.gz demeaned_${run}.nii.gz
+fslmaths demeaned_${run}.nii.gz -div mean_${run}.nii.gz demeaned_divided_${run}.nii.gz
+fslmaths demeaned_divided_${run} -mul 100 ${run}_MNI_percentSC
+rm -f mean_${run}.nii.gz std_${run}.nii.z demeaned_${run}.nii.gz demeaned_divided_${run}.nii.gz AROMA_${run}.nii.gz
+echo "done conversion to percent signal change for ${run} ${session} ${sub}"
+done
+
+
