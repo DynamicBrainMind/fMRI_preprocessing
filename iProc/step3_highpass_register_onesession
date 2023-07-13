@@ -2,8 +2,6 @@
 # Written by Aaron Kucyi
 # compatible with BIDS or BIDS-like organized data
 
-# TO DO: replace session and run variables with input text files containing lists created for each subject
-
 # Required inputs:
 # 1. Path to dataset folder (parent folder containing subject>session>run subfolders)
 # 2. Name of folder containing organized data (in bids or bids-like format)
@@ -48,11 +46,19 @@ cd ${func_path}
 feat ${sub}_highpass_${run}.fsf
 echo "done FEAT high-pass filtering and registration for ${sub} ${session} ${run}"
 
-## Transform to MNI space
+## Run bandpass filtering (0.01 - 0.1 Hz)
+hp_sigma=`python -c "print (((1/.01)/2)/$tr)"`
+lp_sigma=`python -c "print (((1/.1)/2)/$tr)"`
+fslmaths AROMA_${run} -Tmean tempMean
+fslmaths AROMA_${run} -bptf $hp_sigma $lp_sigma -add tempMean ${run}_AROMA_bptf
+rm -f tempMean.nii.gz
+
+## Transform bandpassed and highpassed data to MNI space
 flirt -in Prestats_AROMA_${run}.feat/highpass.feat/filtered_func_data -ref ${path}/scripts/fMRI_preprocessing/MNI152_T1_2mm_brain -out ${sub}_AROMA_MNI_${run} -applyxfm -init Prestats_AROMA_${run}.feat/highpass.feat/reg/example_func2standard.mat -interp trilinear
+flirt -in ${run}_AROMA_bptf -ref ${path}/scripts/fMRI_preprocessing/MNI152_T1_2mm_brain -out ${run}_AROMA_MNI_bptf -applyxfm -init Prestats_AROMA_${run}.feat/highpass.feat/reg/example_func2standard.mat -interp trilinear
 echo "done transforming preprocessed data to standard space"
 
-## Compute percent signal change
+## Compute percent signal change on highpassed MNI data
 cd ${func_path}
 fslmaths ${sub}_AROMA_MNI_${run}.nii.gz -Tmean mean_${run}.nii.gz
 fslmaths ${sub}_AROMA_MNI_${run}.nii.gz -sub mean_${run}.nii.gz demeaned_${run}.nii.gz
