@@ -13,6 +13,6 @@
 - In iProc folder:
 -    **step1_run_alignment_onesub** creates common fMRI template across all sessions/runs and registers each run to it (+performs motion correction)
 -    **step2_ICA_AROMA_iProc_onesession** runs ICA-AROMA (plus regression of thresholded white matter and CSF)
--    **step3_highpass_register_onesession** runs highpass filtering and registration to MNI space, plus conversion to % signal change
+-    **step3_highpass_register_onesession** runs highpass filtering (0.01 Hz cutoff), bandpass (0.01 - 0.1 Hz) filtering, and registration to MNI space, plus conversion to % signal change (for high-pass filtered data)
 
 
