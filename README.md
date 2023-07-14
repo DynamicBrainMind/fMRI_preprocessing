@@ -1,5 +1,8 @@
 # fMRI_preprocessing
 
+**Overview**
+- These scripts perform preprocessing of fMRI data (task or rest), including head motion correction, registration (to anatomical and MNI standard space),  [ICA-AROMA](https://www.sciencedirect.com/science/article/abs/pii/S1053811915001822), regression of eroded white matter and cerebrospinal fluid signals, highpass (0.01 Hz) cutoff filtering, bandpass (0.01 - 0.1 Hz) filtering (e.g. for resting state fMRI), and coversion to % signal change.
+
 **Setup**
 - Dataset should be organized in BIDS or BIDS-like format (e.g. dataset/subject/session/func contains all func files for a session)
 - this repository should be saved a subfolder within a folder called "scripts" that is within a parent folder that also contains "dataset" as in the above example
