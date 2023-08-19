@@ -51,9 +51,10 @@ cd ${path}/scripts/fMRI_preprocessing
 sed -e "s/####SUBJECT####/${sub}/g" Prestats_AROMA.fsf > temp.fsf
 sed -e "s/####SESSION####/${session}/g" temp.fsf > temp2.fsf
 sed -e "s/####RUN####/${run}/g" temp2.fsf > temp3.fsf
-tr=`mri_info ${func_path}/$run_file --tr`
-tr=$(echo "scale=3 ; $tr / 1000" | bc)
-volumes=`mri_info ${func_path}/$run_file --nframes`
+tr=`fslinfo ${func_path}/${run}_mcf_template | grep "^pixdim4" | awk '{print $2}'`
+echo "TR = ${tr}"
+volumes=`fslinfo ${func_path}/${run}_mcf_template | grep "^dim4" | awk '{print $2}'`
+echo "n volumes = ${volumes}"
 sed -e "s/####TR####/${tr}/g" temp3.fsf > temp4.fsf
 sed -e "s/####VOLUMES####/${volumes}/g" temp4.fsf > temp5.fsf
 sed -e "s+####PATH####+${path}+g" temp5.fsf > temp6.fsf
@@ -88,10 +89,10 @@ csf_vol=`fslstats CSF_func_${run} -V`
 wm_vol=$(echo $wm_vol | awk '{print $2}')
 csf_vol=$(echo $csf_vol | awk '{print $2}')
 # get % of voxels in WM and CSF volumes to retain and set intensity threshold
-wm_retain=$(echo "scale=5 ; $final_wm_vol / $wm_vol" | bc)
-csf_retain=$(echo "scale=5 ; $final_csf_vol / $csf_vol" | bc)
-wm_cutoff=$(echo "scale=5 ; 100-($wm_retain*100)" | bc)
-csf_cutoff=$(echo "scale=5 ; 100-($csf_retain*100)" | bc)
+wm_retain=`python -c "print ($final_wm_vol / float($wm_vol) )"`
+csf_retain=`python -c "print ($final_csf_vol / float($csf_vol)  )"`
+wm_cutoff=`python -c "print (100-($wm_retain*100) )"`
+csf_cutoff=`python -c "print (100-($csf_retain*100) )"`
 wm_thr=`fslstats WM_func_${run} -P $wm_cutoff`
 csf_thr=`fslstats CSF_func_${run} -P $csf_cutoff`
 # compute and output thresholded WM and CSF volumes
@@ -113,6 +114,15 @@ echo "done regressing out WM"
 fsl_regfilt -i  WM_${run}_AROMA -d  CSF_AROMA_${run}.txt -o AROMA_${run} -f "1"
 echo "done regressing out CSF"
 rm -f WM_${run}_AROMA.nii.gz
+echo "done regressing out WM+CSF for ${sub} ${session} ${run}"
+
+## Run bandpass filtering (0.01 - 0.1 Hz)
+hp_sigma=`python -c "print (((1/.01)/2)/$tr)"`
+lp_sigma=`python -c "print (((1/.1)/2)/$tr)"`
+fslmaths AROMA_${run} -Tmean tempMean
+fslmaths AROMA_${run} -bptf $hp_sigma $lp_sigma -add tempMean ${run}_AROMA_bptf
+rm -f tempMean.nii.gz AROMA_${run}.nii.gz
+echo "done 0.01-0.1 Hz filtering"
 echo "done ICA-AROMA preprocessing for ${sub} ${session} ${run} !"
 
 
