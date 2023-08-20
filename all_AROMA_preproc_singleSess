@@ -1,6 +1,6 @@
 #! /bin/bash -f
 # Written by Aaron Kucyi
-# For single session data (i.e., no subfolder for sessions within BIDS folder)
+# For BIDS-organized data with a  single session for each subject (i.e., no subfolder for sessions within BIDS folder)
 
 # Required inputs:
 # 1. Path to dataset folder (parent folder containing subject>run subfolders)
@@ -11,6 +11,8 @@
 # All scripts should be in a folder called "scripts" within the parent folder containing subject folders
 # ICA-AROMA-master folder should be within "scripts" folder
 # Dependencies: FSL, freesurfer, python2.7, ICA-AROMA-master folder
+
+start=$(date +%s)
 
 ## Initate inputs, paths and output paths
 path=$1
@@ -122,6 +124,8 @@ fslmaths AROMA_${run} -Tmean tempMean
 fslmaths AROMA_${run} -bptf $hp_sigma $lp_sigma -add tempMean ${run}_AROMA_bptf
 rm -f tempMean.nii.gz AROMA_${run}.nii.gz
 echo "done 0.01-0.1 Hz filtering"
-echo "done ICA-AROMA preprocessing for ${sub} ${run} !"
+end=$(date +%s)
+end_mins=`python -c "print (($end-$start)/60 )"`
+echo "done ICA-AROMA preprocessing for ${sub} ${run}! Total time: $end_mins minutes"
 
 
