@@ -118,10 +118,12 @@ rm -f WM_${run}_AROMA.nii.gz
 echo "done regressing out WM+CSF for ${sub} ${run}"
 
 ## Run bandpass filtering (0.01 - 0.1 Hz)
-hp_sigma=`python -c "print (((1/.01)/2)/$tr)"`
-lp_sigma=`python -c "print (((1/.1)/2)/$tr)"`
+#hp_sigma=`python -c "print (((1/.01)/2)/$tr)"`
+#lp_sigma=`python -c "print (((1/.1)/2)/$tr)"`
 fslmaths AROMA_${run} -Tmean tempMean
-fslmaths AROMA_${run} -bptf $hp_sigma $lp_sigma -add tempMean ${run}_AROMA_bptf
+3dBandpass -notrans -nodetrend -prefix ${run}_AROMA_bptf.nii.gz 0.01 0.1 AROMA_${run}.nii.gz
+fslmaths ${run}_AROMA_bptf.nii.gz -add tempMean ${run}_AROMA_bptf.nii.gz
+#fslmaths AROMA_${run} -bptf $hp_sigma $lp_sigma -add tempMean ${run}_AROMA_bptf
 rm -f tempMean.nii.gz AROMA_${run}.nii.gz
 echo "done 0.01-0.1 Hz filtering"
 end=$(date +%s)
