@@ -1,43 +1,45 @@
 #! /bin/bash -f
 # Written by Aaron Kucyi
+# For BIDS-organized data with a  single session for each subject (i.e., no subfolder for sessions within BIDS folder)
 
 # Required inputs:
-# 1. Path to dataset folder (parent folder containing subject>session>run subfolders)
+# 1. Path to dataset folder (parent folder containing subject>run subfolders)
 # 2. Name of folder containing organized data (in bids or bids-like format)
 # 3. Subject name
-# 4. Session name
-# 5. Run name
+# 4. Run name
 
-# T1 data should be in "anat" subfolder within subject folder and named "anat.nii.gz"
 # All scripts should be in a folder called "scripts" within the parent folder containing subject folders
 # ICA-AROMA-master folder should be within "scripts" folder
 # Dependencies: FSL, freesurfer, python2.7, ICA-AROMA-master folder
-# Other files needed: Prestats_AROMA.fsf
+
+start=$(date +%s)
 
 ## Initate inputs, paths and output paths
 path=$1
 data_folder=$2
 sub=$3
-session=$4
-run=$5
+run=$4
 mkdir -p ${path}/derivatives
 mkdir -p ${path}/derivatives/${sub}
-mkdir -p ${path}/derivatives/${sub}/${session}
-mkdir -p ${path}/derivatives/${sub}/${session}/anat
-mkdir -p ${path}/derivatives/${sub}/${session}/func
-func_path=${path}/${data_folder}/${sub}/${session}/func
-output_path=${path}/derivatives/${sub}/${session}
+mkdir -p ${path}/derivatives/${sub}
+mkdir -p ${path}/derivatives/${sub}/anat
+mkdir -p ${path}/derivatives/${sub}/func
+func_path=${path}/${data_folder}/${sub}/func
+output_path=${path}/derivatives/${sub}
 echo "path to subject/session is $1/$2/$3"
 echo "output path is set to $output_path"
-
-cd ${path}/${data_folder}/${sub}/${session}
+echo "entering subject path ${path}/${data_folder}/${sub}"
+cd ${path}/${data_folder}/${sub}
 
 ## Segment T1 into WM, CSF, GM (if not already done)
 if [ ! -f ${output_path}/anat/anat_brain.nii.gz ]; then
-	echo "performing brain extraction for ${sub} ${session}"
-	bet anat/anat ${output_path}/anat/anat_brain -B -f 0.25 -g 0
-	echo "performing FAST segmentation for ${sub} ${session}"
+	echo "performing brain extraction for ${sub}"
+	cd anat
+	anat_file=$(find *.nii.gz)
+	bet ${anat_file} ${output_path}/anat/anat_brain -B -f 0.25 -g 0
+	echo "performing FAST segmentation for ${sub}"
 	fast -t 1 -g -o ${output_path}/anat/anat_brain.nii.gz
+	cd ..
 	echo "done FAST segmentation"
 else
 	echo "skipping segmentation (already done)"
@@ -48,12 +50,11 @@ cd ${func_path}
 run_file=$(find $run*)
 echo "Creating FSF file for AROMA subject: " $sub
 cd ${path}/scripts/fMRI_preprocessing
-sed -e "s/####SUBJECT####/${sub}/g" Prestats_AROMA.fsf > temp.fsf
-sed -e "s/####SESSION####/${session}/g" temp.fsf > temp2.fsf
+sed -e "s/####SUBJECT####/${sub}/g" Prestats_AROMA_singleSess.fsf > temp2.fsf
 sed -e "s/####RUN####/${run}/g" temp2.fsf > temp3.fsf
-tr=`fslinfo ${func_path}/${run}_mcf_template | grep "^pixdim4" | awk '{print $2}'`
+tr=`fslinfo ${func_path}/${run} | grep "^pixdim4" | awk '{print $2}'`
 echo "TR = ${tr}"
-volumes=`fslinfo ${func_path}/${run}_mcf_template | grep "^dim4" | awk '{print $2}'`
+volumes=`fslinfo ${func_path}/${run} | grep "^dim4" | awk '{print $2}'`
 echo "n volumes = ${volumes}"
 sed -e "s/####TR####/${tr}/g" temp3.fsf > temp4.fsf
 sed -e "s/####VOLUMES####/${volumes}/g" temp4.fsf > temp5.fsf
@@ -114,17 +115,17 @@ echo "done regressing out WM"
 fsl_regfilt -i  WM_${run}_AROMA -d  CSF_AROMA_${run}.txt -o AROMA_${run} -f "1"
 echo "done regressing out CSF"
 rm -f WM_${run}_AROMA.nii.gz
-echo "done regressing out WM+CSF for ${sub} ${session} ${run}"
+echo "done regressing out WM+CSF for ${sub} ${run}"
 
 ## Run bandpass filtering (0.01 - 0.1 Hz)
-#hp_sigma=`python -c "print (((1/.01)/2)/$tr)"`
-#lp_sigma=`python -c "print (((1/.1)/2)/$tr)"`
+hp_sigma=`python -c "print (((1/.01)/2)/$tr)"`
+lp_sigma=`python -c "print (((1/.1)/2)/$tr)"`
 fslmaths AROMA_${run} -Tmean tempMean
-3dBandpass -notrans -nodetrend -prefix ${run}_AROMA_bptf.nii.gz 0.01 0.1 AROMA_${run}.nii.gz
-fslmaths ${run}_AROMA_bptf.nii.gz -add tempMean ${run}_AROMA_bptf.nii.gz
-#fslmaths AROMA_${run} -bptf $hp_sigma $lp_sigma -add tempMean ${run}_AROMA_bptf
+fslmaths AROMA_${run} -bptf $hp_sigma $lp_sigma -add tempMean ${run}_AROMA_bptf
 rm -f tempMean.nii.gz AROMA_${run}.nii.gz
 echo "done 0.01-0.1 Hz filtering"
-echo "done ICA-AROMA preprocessing for ${sub} ${session} ${run} !"
+end=$(date +%s)
+end_mins=`python -c "print (($end-$start)/60 )"`
+echo "done ICA-AROMA preprocessing for ${sub} ${run}! Total time: $end_mins minutes"
 
 
