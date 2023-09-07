@@ -48,6 +48,10 @@ fi
 ## Set up Pre-AROMA FEAT preprocessing template
 cd ${func_path}
 run_file=$(find $run*)
+# remove prior .fsf files and Prestats folders
+cd ${output_path}/func
+rm -f *.fsf
+rm -r -f Prestats*
 echo "Creating FSF file for AROMA subject: " $sub
 cd ${path}/scripts/fMRI_preprocessing
 sed -e "s/####SUBJECT####/${sub}/g" Prestats_AROMA_singleSess.fsf > temp2.fsf
@@ -62,7 +66,7 @@ sed -e "s+####PATH####+${path}+g" temp5.fsf > temp6.fsf
 sed -e "s+####FUNCDIR####+${func_path}+g" temp6.fsf > temp7.fsf
 sed -e "s/####VOLUMES####/${volumes}/g" temp7.fsf > ${sub}_Prestats_AROMA_${run}.fsf
 mv ${sub}_Prestats_AROMA_${run}.fsf ${output_path}/func
-rm -f temp.fsf temp2.fsf temp3.fsf temp4.fsf temp5.fsf temp6.fsf temp7.fsf
+rm -f temp2.fsf temp3.fsf temp4.fsf temp5.fsf temp6.fsf temp7.fsf
 echo "done making FEAT setup for ${sub} ${run}"
 
 ## Run FEAT for pre-AROMA
