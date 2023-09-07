@@ -51,7 +51,7 @@ run_file=$(find $run*)
 # remove prior .fsf files and Prestats folders
 cd ${output_path}/func
 rm -f *.fsf
-rm -r -f Prestats*
+rm -r -f Prestats_${run}.feat
 echo "Creating FSF file for AROMA subject: " $sub
 cd ${path}/scripts/fMRI_preprocessing
 sed -e "s/####SUBJECT####/${sub}/g" Prestats_AROMA_singleSess.fsf > temp2.fsf
