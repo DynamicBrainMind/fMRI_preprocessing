@@ -9,7 +9,7 @@
 - outputs are saved in "derivatives" folder within parent folder
 
 **Required software**
-- FSL, freesurfer, python2.7
+- FSL, freesurfer, python2.7, AFNI
 
 **Running the scripts**
 - **all_AROMA_preproc** runs ICA-AROMA preprocessing on one run of fMRI data for data organized in BIDS or BIDS-like format. Must "source" this from the command line.
