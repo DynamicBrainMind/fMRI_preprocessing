@@ -51,9 +51,9 @@ cd ${path}/scripts/fMRI_preprocessing
 sed -e "s/####SUBJECT####/${sub}/g" Prestats_AROMA.fsf > temp.fsf
 sed -e "s/####SESSION####/${session}/g" temp.fsf > temp2.fsf
 sed -e "s/####RUN####/${run}/g" temp2.fsf > temp3.fsf
-tr=`fslinfo ${func_path}/${run}_mcf_template | grep "^pixdim4" | awk '{print $2}'`
+tr=`fslinfo ${func_path}/${run} | grep "^pixdim4" | awk '{print $2}'`
 echo "TR = ${tr}"
-volumes=`fslinfo ${func_path}/${run}_mcf_template | grep "^dim4" | awk '{print $2}'`
+volumes=`fslinfo ${func_path}/${run} | grep "^dim4" | awk '{print $2}'`
 echo "n volumes = ${volumes}"
 sed -e "s/####TR####/${tr}/g" temp3.fsf > temp4.fsf
 sed -e "s/####VOLUMES####/${volumes}/g" temp4.fsf > temp5.fsf
