@@ -10,6 +10,8 @@
 
 **Required software**
 - [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation), [freesurfer](https://surfer.nmr.mgh.harvard.edu/fswiki/DownloadAndInstall), python2.7 (+numpy), [AFNI](https://afni.nimh.nih.gov/)
+- If you have multiple versions of python installed, you can install numpy for version 2.7 by typing "python2.7 -m pip install numpy" in terminal
+	
 
 **Running the scripts**
 - **all_AROMA_preproc** runs ICA-AROMA preprocessing on one run of fMRI data for data organized in BIDS or BIDS-like format. Must "source" this from the command line.
