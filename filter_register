@@ -1,0 +1,40 @@
+#! /bin/bash -f
+# Written by Aaron Kucyi
+
+# Required inputs:
+# 1. Path to dataset folder (parent folder containing subject>session>run subfolders)
+# 2. Name of folder containing organized data (in bids or bids-like format)
+# 3. Subject name
+# 4. Session name
+# 5. Run name
+
+# T1 data should be in "anat" subfolder within subject folder and named "anat.nii.gz"
+# All scripts should be in a folder called "scripts" within the parent folder containing subject folders
+# ICA-AROMA-master folder should be within "scripts" folder
+# Dependencies: FSL, freesurfer, python2.7, ICA-AROMA-master folder
+# Other files needed: Prestats_AROMA.fsf
+
+## Initate inputs, paths and output paths
+path=$1
+data_folder=$2
+sub=$3
+session=$4
+run=$5
+mkdir -p ${path}/derivatives
+mkdir -p ${path}/derivatives/${sub}
+mkdir -p ${path}/derivatives/${sub}/${session}
+mkdir -p ${path}/derivatives/${sub}/${session}/anat
+mkdir -p ${path}/derivatives/${sub}/${session}/func
+func_path=${path}/${data_folder}/${sub}/${session}/func
+output_path=${path}/derivatives/${sub}/${session}
+echo "path to subject/session is $1/$2/$3"
+echo "output path is set to $output_path"
+
+cd ${output_path}/func
+fslmaths AROMA_${run} -Tmean tempMean
+3dBandpass -notrans -nodetrend -prefix ${run}_AROMA_bptf.nii.gz 0.01 0.1 AROMA_${run}.nii.gz
+fslmaths ${run}_AROMA_bptf.nii.gz -add tempMean ${run}_AROMA_bptf.nii.gz
+echo "done 0.01-0.1 Hz filtering"
+
+
+

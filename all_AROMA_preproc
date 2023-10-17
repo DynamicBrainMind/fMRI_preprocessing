@@ -119,12 +119,12 @@ echo "done regressing out WM+CSF for ${sub} ${session} ${run}"
 ## Run bandpass filtering (0.01 - 0.1 Hz)
 #hp_sigma=`python -c "print (((1/.01)/2)/$tr)"`
 #lp_sigma=`python -c "print (((1/.1)/2)/$tr)"`
-fslmaths AROMA_${run} -Tmean tempMean
-3dBandpass -notrans -nodetrend -prefix ${run}_AROMA_bptf.nii.gz 0.01 0.1 AROMA_${run}.nii.gz
-fslmaths ${run}_AROMA_bptf.nii.gz -add tempMean ${run}_AROMA_bptf.nii.gz
+#fslmaths AROMA_${run} -Tmean tempMean
+#3dBandpass -notrans -nodetrend -prefix ${run}_AROMA_bptf.nii.gz 0.01 0.1 AROMA_${run}.nii.gz
+#fslmaths ${run}_AROMA_bptf.nii.gz -add tempMean ${run}_AROMA_bptf.nii.gz
 #fslmaths AROMA_${run} -bptf $hp_sigma $lp_sigma -add tempMean ${run}_AROMA_bptf
-rm -f tempMean.nii.gz AROMA_${run}.nii.gz
-echo "done 0.01-0.1 Hz filtering"
+#rm -f tempMean.nii.gz AROMA_${run}.nii.gz
+#echo "done 0.01-0.1 Hz filtering"
 echo "done ICA-AROMA preprocessing for ${sub} ${session} ${run} !"
 
 
