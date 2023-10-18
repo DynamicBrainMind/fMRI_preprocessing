@@ -8,11 +8,8 @@
 # 4. Session name
 # 5. Run name
 
-# T1 data should be in "anat" subfolder within subject folder and named "anat.nii.gz"
-# All scripts should be in a folder called "scripts" within the parent folder containing subject folders
-# ICA-AROMA-master folder should be within "scripts" folder
-# Dependencies: FSL, freesurfer, python2.7, ICA-AROMA-master folder
-# Other files needed: Prestats_AROMA.fsf
+# "fMRI_preprocessing" folder/repo should be within a folder called "scripts" 
+# "scripts" should be within same parent folder that contains the BIDS folder 
 
 ## Initate inputs, paths and output paths
 path=$1
