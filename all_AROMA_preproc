@@ -130,13 +130,12 @@ flirt -in ${run}_AROMA_hptf -ref ${path}/scripts/fMRI_preprocessing/MNI152_T1_2m
 echo "done transforming preprocessed data to standard space for ${sub} ${session} ${run}"
 
 # Compute percent signal change on highpassed MNI data
-fslmaths ${sub}_AROMA_MNI_${run}.nii.gz -Tmean mean_${run}.nii.gz
-fslmaths ${sub}_AROMA_MNI_${run}.nii.gz -sub mean_${run}.nii.gz demeaned_${run}.nii.gz
+fslmaths ${run}_AROMA_MNI_hptf.nii.gz -Tmean mean_${run}.nii.gz
+fslmaths ${run}_AROMA_MNI_hptf.nii.gz -sub mean_${run}.nii.gz demeaned_${run}.nii.gz
 fslmaths demeaned_${run}.nii.gz -div mean_${run}.nii.gz demeaned_divided_${run}.nii.gz
 fslmaths demeaned_divided_${run} -mul 100 ${run}_MNI_percentSC
 rm -f mean_${run}.nii.gz std_${run}.nii.z demeaned_${run}.nii.gz demeaned_divided_${run}.nii.gz AROMA_${run}.nii.gz
 echo "done conversion to percent signal change for ${run} ${session} ${sub}"
-done
 
 
 
