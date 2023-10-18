@@ -115,16 +115,31 @@ fsl_regfilt -i  WM_${run}_AROMA -d  CSF_AROMA_${run}.txt -o AROMA_${run} -f "1"
 echo "done regressing out CSF"
 rm -f WM_${run}_AROMA.nii.gz
 echo "done regressing out WM+CSF for ${sub} ${session} ${run}"
-
-## Run bandpass filtering (0.01 - 0.1 Hz)
-#hp_sigma=`python -c "print (((1/.01)/2)/$tr)"`
-#lp_sigma=`python -c "print (((1/.1)/2)/$tr)"`
-#fslmaths AROMA_${run} -Tmean tempMean
-#3dBandpass -notrans -nodetrend -prefix ${run}_AROMA_bptf.nii.gz 0.01 0.1 AROMA_${run}.nii.gz
-#fslmaths ${run}_AROMA_bptf.nii.gz -add tempMean ${run}_AROMA_bptf.nii.gz
-#fslmaths AROMA_${run} -bptf $hp_sigma $lp_sigma -add tempMean ${run}_AROMA_bptf
-#rm -f tempMean.nii.gz AROMA_${run}.nii.gz
-#echo "done 0.01-0.1 Hz filtering"
 echo "done ICA-AROMA preprocessing for ${sub} ${session} ${run} !"
+
+fslmaths AROMA_${run} -Tmean tempMean
+3dBandpass -notrans -nodetrend -prefix ${run}_AROMA_bptf.nii.gz 0.01 0.1 AROMA_${run}.nii.gz
+fslmaths ${run}_AROMA_bptf.nii.gz -add tempMean ${run}_AROMA_bptf.nii.gz
+echo "done 0.01-0.1 Hz filtering for ${sub} ${session} ${run}"
+3dBandpass -notrans -nodetrend -prefix ${run}_AROMA_hptf.nii.gz 0.01 1000 AROMA_${run}.nii.gz
+echo "done 0.01 Hz Hz highpass filtering for ${sub} ${session} ${run}"
+fslmaths ${run}_AROMA_bptf.nii.gz -add tempMean ${run}_AROMA_bptf.nii.gz
+fslmaths ${run}_AROMA_hptf.nii.gz -add tempMean ${run}_AROMA_hptf.nii.gz
+rm -f tempMean.nii.gz AROMA_${run}.nii.gz
+
+# Transform bandpassed and highpassed data to MNI space
+flirt -in ${run}_AROMA_bptf -ref ${path}/scripts/fMRI_preprocessing/MNI152_T1_2mm_brain -out ${run}_AROMA_MNI_bptf -applyxfm -init Prestats_AROMA_${run}.feat/reg/example_func2standard.mat -interp trilinear
+flirt -in ${run}_AROMA_hptf -ref ${path}/scripts/fMRI_preprocessing/MNI152_T1_2mm_brain -out ${run}_AROMA_MNI_hptf -applyxfm -init Prestats_AROMA_${run}.feat/reg/example_func2standard.mat -interp trilinear
+echo "done transforming preprocessed data to standard space for ${sub} ${session} ${run}"
+
+# Compute percent signal change on highpassed MNI data
+fslmaths ${sub}_AROMA_MNI_${run}.nii.gz -Tmean mean_${run}.nii.gz
+fslmaths ${sub}_AROMA_MNI_${run}.nii.gz -sub mean_${run}.nii.gz demeaned_${run}.nii.gz
+fslmaths demeaned_${run}.nii.gz -div mean_${run}.nii.gz demeaned_divided_${run}.nii.gz
+fslmaths demeaned_divided_${run} -mul 100 ${run}_MNI_percentSC
+rm -f mean_${run}.nii.gz std_${run}.nii.z demeaned_${run}.nii.gz demeaned_divided_${run}.nii.gz AROMA_${run}.nii.gz
+echo "done conversion to percent signal change for ${run} ${session} ${sub}"
+done
+
 
 
