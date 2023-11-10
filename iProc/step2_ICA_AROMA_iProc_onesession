@@ -11,6 +11,21 @@
 # 4. Session: Name of func session to process (all runs in this session)
 # 5. Anat session: Name of session to use for anatomical scan (for registration of all func runs/session)
 
+usage() {
+	echo ""
+	echo "Usage: step2_ICA_AROMA_iProc_onesession <path_to_bids_folder> <name_of_bids_folder> <subject_name> <name_of_func_session> <name_of_anat_session>"
+	echo "example: step2_ICA_AROMA_iProc_onesession /work/kucyi/data/Hung_MW data MW01 Session1 Session1"
+	echo "(5 inputs required)"
+	echo "This function performs preprocessing including ICA-AROMA and regression of WM and CSF signals for all BOLD runs within one session"
+	echo "The anat session must be specified for the T1 scan to use for registration"
+	echo "output will be in <path_to_bids_folder>/derivatives/subject/iProc"
+}
+
+if [[ $# -eq 0 ]] ; then
+	usage
+	exit
+fi
+
 ## Initate inputs, paths and output paths
 path=$1
 data_folder=$2

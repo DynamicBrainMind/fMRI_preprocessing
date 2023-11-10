@@ -2,14 +2,28 @@
 # Written by Aaron Kucyi
 # compatible with BIDS or BIDS-like organized data
 
-# TO DO: replace session and run variables with input text files containing lists created for each subject
-
 # Required inputs:
 # 1. Path to dataset folder (parent folder containing subject>session>run subfolders)
 # 2. Name of folder containing organized data (in bids or bids-like format)
 # 3. Subject name
 # 4. Session: Name of func session to process (all runs in this session)
 # 5. Anat session: Name of session to use for anatomical scan (for registration of all func runs/session)
+# 6. Run: Name of functional run to process
+
+usage() {
+	echo ""
+	echo "Usage: step2_ICA_AROMA_iProc_onerun <path_to_bids_folder> <name_of_bids_folder> <subject_name> <name_of_func_session> <name_of_anat_session> <name_of_func_run>"
+	echo "example: step2_ICA_AROMA_iProc_onerun /work/kucyi/data/Hung_MW data MW01 Session1 Session1 es_run1"
+	echo "(6 inputs required)"
+	echo "This function performs preprocessing including ICA-AROMA and regression of WM and CSF signals for one BOLD run"
+	echo "The anat session must be specified for the T1 scan to use for registration"
+	echo "output will be in <path_to_bids_folder>/derivatives/subject/iProc"
+}
+
+if [[ $# -eq 0 ]] ; then
+	usage
+	exit
+fi
 
 ## Initate inputs, paths and output paths
 path=$1

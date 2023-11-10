@@ -7,6 +7,20 @@
 # 2. Name of folder containing organized data (in bids or bids-like format)
 # 3. Subject name
 
+usage() {
+	echo ""
+	echo "Usage: step1_run_alignment_onesubject <path_to_bids_folder> <name_of_bids_folder> <subject_name>"
+	echo "example: step1_run_alignment_onesubject /work/kucyi/data/Hung_MW data MW01"
+	echo "(3 inputs required)"
+	echo "This function creates a common BOLD template by taking mean across all runs and sessions, then it aligns all runs to the template"
+	echo "output will be in <path_to_bids_folder>/derivatives/subject/iProc"
+}
+
+if [[ $# -eq 0 ]] ; then
+	usage
+	exit
+fi
+
 ## Initate inputs, paths and output paths
 path=$1
 data_folder=$2

@@ -8,11 +8,19 @@
 # 4. Session name
 # 5. Run name
 
-# T1 data should be in "anat" subfolder within subject folder and named "anat.nii.gz"
-# All scripts should be in a folder called "scripts" within the parent folder containing subject folders
-# ICA-AROMA-master folder should be within "scripts" folder
-# Dependencies: FSL, freesurfer, python2.7, ICA-AROMA-master folder
-# Other files needed: Prestats_AROMA.fsf
+usage() {
+	echo ""
+	echo "Usage: all_AROMA_preproc <path_to_bids_folder> <name_of_bids_folder> <subject_name> <name_of_func_session> <name_of_func_run>"
+	echo "example: all_AROMA_preproc /work/kucyi/data/Hung_MW data MW01 Session1 es_run1"
+	echo "(5 inputs required)"
+	echo "This function performs all preprocessing on one BOLD run (uses anat scan from same session for registration)"
+	echo "output will be in <path_to_bids_folder>/derivatives/subject"
+}
+
+if [[ $# -eq 0 ]] ; then
+	usage
+	exit
+fi
 
 ## Initate inputs, paths and output paths
 path=$1

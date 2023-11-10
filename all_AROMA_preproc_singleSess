@@ -8,9 +8,20 @@
 # 3. Subject name
 # 4. Run name
 
-# All scripts should be in a folder called "scripts" within the parent folder containing subject folders
-# ICA-AROMA-master folder should be within "scripts" folder
-# Dependencies: FSL, freesurfer, python2.7, ICA-AROMA-master folder
+usage() {
+	echo ""
+	echo "Usage: all_AROMA_preproc_singleSess <path_to_bids_folder> <name_of_bids_folder> <subject_name> <name_of_func_run>"
+	echo "example: all_AROMA_preproc_singleSess /work/kucyi/data/Hung_MW data MW01 bold_run1"
+	echo "(4 inputs required)"
+	echo "This function performs all preprocessing on one BOLD run (uses anat scan from same session for registration)"
+	echo "This is an alternative to all_AROMA_preproc for single-session data with no session subfolders in the BIDS folder"
+	echo "output will be in <path_to_bids_folder>/derivatives/subject"
+}
+
+if [[ $# -eq 0 ]] ; then
+	usage
+	exit
+fi
 
 start=$(date +%s)
 
