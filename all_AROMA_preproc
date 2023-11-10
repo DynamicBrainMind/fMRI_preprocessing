@@ -8,6 +8,7 @@
 # 4. Session name
 # 5. Run name
 
+<<<<<<< HEAD
 usage() {
 	echo ""
 	echo "Usage: all_AROMA_preproc <path_to_bids_folder> <name_of_bids_folder> <subject_name> <name_of_func_session> <name_of_func_run>"
@@ -21,6 +22,10 @@ if [[ $# -eq 0 ]] ; then
 	usage
 	exit
 fi
+=======
+# "fMRI_preprocessing" folder/repo should be within a folder called "scripts" 
+# "scripts" should be within same parent folder that contains the BIDS folder 
+>>>>>>> 1af5a924ad8cd23ea7e879e5a923d64bdade1215
 
 ## Initate inputs, paths and output paths
 path=$1
@@ -59,9 +64,9 @@ cd ${path}/scripts/fMRI_preprocessing
 sed -e "s/####SUBJECT####/${sub}/g" Prestats_AROMA.fsf > temp.fsf
 sed -e "s/####SESSION####/${session}/g" temp.fsf > temp2.fsf
 sed -e "s/####RUN####/${run}/g" temp2.fsf > temp3.fsf
-tr=`fslinfo ${func_path}/${run}_mcf_template | grep "^pixdim4" | awk '{print $2}'`
+tr=`fslinfo ${func_path}/${run} | grep "^pixdim4" | awk '{print $2}'`
 echo "TR = ${tr}"
-volumes=`fslinfo ${func_path}/${run}_mcf_template | grep "^dim4" | awk '{print $2}'`
+volumes=`fslinfo ${func_path}/${run} | grep "^dim4" | awk '{print $2}'`
 echo "n volumes = ${volumes}"
 sed -e "s/####TR####/${tr}/g" temp3.fsf > temp4.fsf
 sed -e "s/####VOLUMES####/${volumes}/g" temp4.fsf > temp5.fsf
@@ -123,16 +128,30 @@ fsl_regfilt -i  WM_${run}_AROMA -d  CSF_AROMA_${run}.txt -o AROMA_${run} -f "1"
 echo "done regressing out CSF"
 rm -f WM_${run}_AROMA.nii.gz
 echo "done regressing out WM+CSF for ${sub} ${session} ${run}"
+echo "done ICA-AROMA preprocessing for ${sub} ${session} ${run} !"
 
-## Run bandpass filtering (0.01 - 0.1 Hz)
-#hp_sigma=`python -c "print (((1/.01)/2)/$tr)"`
-#lp_sigma=`python -c "print (((1/.1)/2)/$tr)"`
 fslmaths AROMA_${run} -Tmean tempMean
 3dBandpass -notrans -nodetrend -prefix ${run}_AROMA_bptf.nii.gz 0.01 0.1 AROMA_${run}.nii.gz
 fslmaths ${run}_AROMA_bptf.nii.gz -add tempMean ${run}_AROMA_bptf.nii.gz
-#fslmaths AROMA_${run} -bptf $hp_sigma $lp_sigma -add tempMean ${run}_AROMA_bptf
+echo "done 0.01-0.1 Hz filtering for ${sub} ${session} ${run}"
+3dBandpass -notrans -nodetrend -prefix ${run}_AROMA_hptf.nii.gz 0.01 1000 AROMA_${run}.nii.gz
+echo "done 0.01 Hz Hz highpass filtering for ${sub} ${session} ${run}"
+fslmaths ${run}_AROMA_bptf.nii.gz -add tempMean ${run}_AROMA_bptf.nii.gz
+fslmaths ${run}_AROMA_hptf.nii.gz -add tempMean ${run}_AROMA_hptf.nii.gz
 rm -f tempMean.nii.gz AROMA_${run}.nii.gz
-echo "done 0.01-0.1 Hz filtering"
-echo "done ICA-AROMA preprocessing for ${sub} ${session} ${run} !"
+
+# Transform bandpassed and highpassed data to MNI space
+flirt -in ${run}_AROMA_bptf -ref ${path}/scripts/fMRI_preprocessing/MNI152_T1_2mm_brain -out ${run}_AROMA_MNI_bptf -applyxfm -init Prestats_AROMA_${run}.feat/reg/example_func2standard.mat -interp trilinear
+flirt -in ${run}_AROMA_hptf -ref ${path}/scripts/fMRI_preprocessing/MNI152_T1_2mm_brain -out ${run}_AROMA_MNI_hptf -applyxfm -init Prestats_AROMA_${run}.feat/reg/example_func2standard.mat -interp trilinear
+echo "done transforming preprocessed data to standard space for ${sub} ${session} ${run}"
+
+# Compute percent signal change on highpassed MNI data
+fslmaths ${run}_AROMA_MNI_hptf.nii.gz -Tmean mean_${run}.nii.gz
+fslmaths ${run}_AROMA_MNI_hptf.nii.gz -sub mean_${run}.nii.gz demeaned_${run}.nii.gz
+fslmaths demeaned_${run}.nii.gz -div mean_${run}.nii.gz demeaned_divided_${run}.nii.gz
+fslmaths demeaned_divided_${run} -mul 100 ${run}_MNI_percentSC
+rm -f mean_${run}.nii.gz std_${run}.nii.z demeaned_${run}.nii.gz demeaned_divided_${run}.nii.gz AROMA_${run}.nii.gz
+echo "done conversion to percent signal change for ${run} ${session} ${sub}"
+
 
 
