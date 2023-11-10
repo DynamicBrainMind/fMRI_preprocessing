@@ -6,6 +6,11 @@
 **Setup**
 - Dataset should be organized in BIDS or BIDS-like format (e.g. dataset/subject/session/func contains all func files for a session)
 - this repository should be saved a subfolder within a folder called "scripts" that is within a parent folder that also contains "dataset" as in the above example
+- After cloning this repository, add the path to your bash startup script (.bash_profile on Mac), e.g. by adding these 2 lines (using your own path) to the script:
+  
+PATH="/Users/ak4379/Documents/project/scripts/fMRI_preprocessing:${PATH}"
+PATH="/Users/ak4379/Documents/project/scripts/fMRI_preprocessing/iProc:${PATH}"
+
 - outputs are saved in "derivatives" folder within parent folder
 
 **Required software**
