@@ -8,7 +8,6 @@
 # 4. Session name
 # 5. Run name
 
-<<<<<<< HEAD
 usage() {
 	echo ""
 	echo "Usage: all_AROMA_preproc <path_to_bids_folder> <name_of_bids_folder> <subject_name> <name_of_func_session> <name_of_func_run>"
@@ -22,10 +21,6 @@ if [[ $# -eq 0 ]] ; then
 	usage
 	exit
 fi
-=======
-# "fMRI_preprocessing" folder/repo should be within a folder called "scripts" 
-# "scripts" should be within same parent folder that contains the BIDS folder 
->>>>>>> 1af5a924ad8cd23ea7e879e5a923d64bdade1215
 
 ## Initate inputs, paths and output paths
 path=$1
