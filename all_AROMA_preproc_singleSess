@@ -3,16 +3,18 @@
 # For BIDS-organized data with a  single session for each subject (i.e., no subfolder for sessions within BIDS folder)
 
 # Required inputs:
-# 1. Path to dataset folder (parent folder containing subject>run subfolders)
-# 2. Name of folder containing organized data (in bids or bids-like format)
-# 3. Subject name
-# 4. Run name
+# 1. Path to bids dataset folder
+# 3. Subject name (name of folder containing subject data)
+# 4. Run name (full name of fMRI file without nifti suffix)
 
 usage() {
 	echo ""
-	echo "Usage: all_AROMA_preproc_singleSess <path_to_bids_folder> <name_of_bids_folder> <subject_name> <name_of_func_run>"
-	echo "example: all_AROMA_preproc_singleSess /work/kucyi/data/Hung_MW data MW01 bold_run1"
-	echo "(4 inputs required)"
+	echo "Usage: all_AROMA_preproc_singleSess <bids_folder> <subject_name> <name_of_func_run>"
+	echo ""
+	echo "example: all_AROMA_preproc_singleSess /work/kucyi/data/project/bids_data sub-001 bold_run1"
+	echo ""
+	echo "(3 inputs required)"
+	echo ""
 	echo "This function performs all preprocessing on one BOLD run (uses anat scan from same session for registration)"
 	echo "This is an alternative to all_AROMA_preproc for single-session data with no session subfolders in the BIDS folder"
 	echo "output will be in <path_to_bids_folder>/derivatives/subject"
@@ -26,10 +28,11 @@ fi
 start=$(date +%s)
 
 ## Initate inputs, paths and output paths
-path=$1
-data_folder=$2
-sub=$3
-run=$4
+bids_path=$1
+sub=$2
+run=$3
+path=`echo ${bids_path%/*}`
+data_folder=`basename ${bids_path}`
 mkdir -p ${path}/derivatives
 mkdir -p ${path}/derivatives/${sub}
 mkdir -p ${path}/derivatives/${sub}
@@ -37,7 +40,7 @@ mkdir -p ${path}/derivatives/${sub}/anat
 mkdir -p ${path}/derivatives/${sub}/func
 func_path=${path}/${data_folder}/${sub}/func
 output_path=${path}/derivatives/${sub}
-echo "path to subject/session is $1/$2/$3"
+echo "path to subject/session is $1/$2"
 echo "output path is set to $output_path"
 echo "entering subject path ${path}/${data_folder}/${sub}"
 cd ${path}/${data_folder}/${sub}
@@ -45,27 +48,26 @@ cd ${path}/${data_folder}/${sub}
 ## Segment T1 into WM, CSF, GM (if not already done)
 if [ ! -f ${output_path}/anat/anat_brain.nii.gz ]; then
 	echo "performing brain extraction for ${sub}"
-	cd anat
-	anat_file=$(find *.nii.gz)
+	anat_file=`find ${path}/${data_folder}/${sub}/anat -name "*.nii*"`
 	bet ${anat_file} ${output_path}/anat/anat_brain -B -f 0.25 -g 0
 	echo "performing FAST segmentation for ${sub}"
 	fast -t 1 -g -o ${output_path}/anat/anat_brain.nii.gz
-	cd ..
 	echo "done FAST segmentation"
 else
 	echo "skipping segmentation (already done)"
 fi
 
 ## Set up Pre-AROMA FEAT preprocessing template
-cd ${func_path}
-run_file=$(find $run*)
+run_file=`find ${path}/${data_folder}/${sub}/func -name "${run}*nii*"`
+echo "fMRI file is $run_file"
 # remove prior .fsf files and Prestats folders
-cd ${output_path}/func
-rm -f *.fsf
-rm -r -f Prestats_AROMA_${run}.feat
+rm -f ${output_path}/func/*.fsf
+rm -r -f ${output_path}/func/Prestats_AROMA_${run}.feat
 echo "Creating FSF file for AROMA subject: " $sub
-cd ${path}/scripts/fMRI_preprocessing
-sed -e "s/####SUBJECT####/${sub}/g" Prestats_AROMA_singleSess.fsf > ${output_path}/temp2.fsf
+Prestats_AROMA=`which Prestats_AROMA_singleSess.fsf`
+scripts_dir=${Prestats_AROMA%/*}
+echo "scripts directory: ${scripts_dir}"
+sed -e "s/####SUBJECT####/${sub}/g" ${Prestats_AROMA} > ${output_path}/temp2.fsf
 sed -e "s/####RUN####/${run}/g" ${output_path}/temp2.fsf > ${output_path}/temp3.fsf
 tr=`fslinfo ${func_path}/${run} | grep "^pixdim4" | awk '{print $2}'`
 echo "TR = ${tr}"
@@ -75,34 +77,31 @@ sed -e "s/####TR####/${tr}/g" ${output_path}/temp3.fsf > ${output_path}/temp4.fs
 sed -e "s/####VOLUMES####/${volumes}/g" ${output_path}/temp4.fsf > ${output_path}/temp5.fsf
 sed -e "s+####PATH####+${path}+g" ${output_path}/temp5.fsf > ${output_path}/temp6.fsf
 sed -e "s+####FUNCDIR####+${func_path}+g" ${output_path}/temp6.fsf > ${output_path}/temp7.fsf
-sed -e "s/####VOLUMES####/${volumes}/g" ${output_path}/temp7.fsf > ${output_path}/${sub}_Prestats_AROMA_${run}.fsf
+sed -e "s+####STANDARD####+${scripts_dir}+g" ${output_path}/temp7.fsf > ${output_path}/temp8.fsf
+sed -e "s/####VOLUMES####/${volumes}/g" ${output_path}/temp8.fsf > ${output_path}/${sub}_Prestats_AROMA_${run}.fsf
 mv ${output_path}/${sub}_Prestats_AROMA_${run}.fsf ${output_path}/func
-cd ${output_path}
-rm -f temp2.fsf temp3.fsf temp4.fsf temp5.fsf temp6.fsf temp7.fsf
+rm -f ${output_path}/temp1.fsf ${output_path}/temp2.fsf ${output_path}/temp3.fsf ${output_path}/temp4.fsf 
+rm -f ${output_path}/temp5.fsf ${output_path}/temp6.fsf ${output_path}/temp7.fsf ${output_path}/temp8.fsf 
 echo "done making FEAT setup for ${sub} ${run}"
 
 ## Run FEAT for pre-AROMA
 echo "running Pre-AROMA FEAT preprocessing"
-cd ${output_path}/func
-feat ${sub}_Prestats_AROMA_${run}.fsf
+feat ${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf
 echo "done FEAT for AROMA pipeline, ${sub} ${run}: check registration and motion"
 
 # Run ICA
-cd ${path}/scripts/fMRI_preprocessing
-python2.7 ICA-AROMA-master/ICA_AROMA.py -feat ${output_path}/func/Prestats_AROMA_${run}.feat -out ${output_path}/func/Prestats_AROMA_${run}.feat/ICA_AROMA
+python2.7 ${scripts_dir}/ICA-AROMA-master/ICA_AROMA.py -feat ${output_path}/func/Prestats_AROMA_${run}.feat -out ${output_path}/func/Prestats_AROMA_${run}.feat/ICA_AROMA
 echo "done ICA for ${sub} ${run}"
 
 ## Threshold WM and CSF volumes (set WM and CSF volumes to 198000 and 20000)
-cd ${output_path}/anat
 # register WM and CSF to func
-flirt -in anat_brain_pve_0.nii.gz -ref ${output_path}/func/Prestats_AROMA_${run}.feat/example_func.nii.gz -applyxfm -init ${output_path}/func/Prestats_AROMA_${run}.feat/reg/highres2example_func.mat -out ${output_path}/func/CSF_func_${run}
-flirt -in anat_brain_pve_2.nii.gz -ref ${output_path}/func/Prestats_AROMA_${run}.feat/example_func.nii.gz -applyxfm -init ${output_path}/func/Prestats_AROMA_${run}.feat/reg/highres2example_func.mat -out ${output_path}/func/WM_func_${run}
+flirt -in ${output_path}/anat/anat_brain_pve_0.nii.gz -ref ${output_path}/func/Prestats_AROMA_${run}.feat/example_func.nii.gz -applyxfm -init ${output_path}/func/Prestats_AROMA_${run}.feat/reg/highres2example_func.mat -out ${output_path}/func/CSF_func_${run}
+flirt -in ${output_path}/anat/anat_brain_pve_2.nii.gz -ref ${output_path}/func/Prestats_AROMA_${run}.feat/example_func.nii.gz -applyxfm -init ${output_path}/func/Prestats_AROMA_${run}.feat/reg/highres2example_func.mat -out ${output_path}/func/WM_func_${run}
 final_wm_vol=198000
 final_csf_vol=20000
-cd ${output_path}/func
 # get volume of unthresholded WM and CSF
-wm_vol=`fslstats WM_func_${run} -V` 
-csf_vol=`fslstats CSF_func_${run} -V`
+wm_vol=`fslstats ${output_path}/func/WM_func_${run} -V` 
+csf_vol=`fslstats ${output_path}/func/CSF_func_${run} -V`
 wm_vol=$(echo $wm_vol | awk '{print $2}')
 csf_vol=$(echo $csf_vol | awk '{print $2}')
 # get % of voxels in WM and CSF volumes to retain and set intensity threshold
@@ -110,41 +109,55 @@ wm_retain=`python -c "print ($final_wm_vol / float($wm_vol) )"`
 csf_retain=`python -c "print ($final_csf_vol / float($csf_vol)  )"`
 wm_cutoff=`python -c "print (100-($wm_retain*100) )"`
 csf_cutoff=`python -c "print (100-($csf_retain*100) )"`
-wm_thr=`fslstats WM_func_${run} -P $wm_cutoff`
-csf_thr=`fslstats CSF_func_${run} -P $csf_cutoff`
+wm_thr=`fslstats ${output_path}/func/WM_func_${run} -P $wm_cutoff`
+csf_thr=`fslstats ${output_path}/func/CSF_func_${run} -P $csf_cutoff`
 # compute and output thresholded WM and CSF volumes
-fslmaths WM_func_${run} -thr $wm_thr -bin WM_thr_${run}
-fslmaths CSF_func_${run} -thr $csf_thr -bin CSF_thr_${run}
+fslmaths ${output_path}/func/WM_func_${run} -thr $wm_thr -bin ${output_path}/func/WM_thr_${run}
+fslmaths ${output_path}/func/CSF_func_${run} -thr $csf_thr -bin ${output_path}/func/CSF_thr_${run}
 
-# regress out WM & CSF (AROMA pipeline)
-cd ${output_path}/func
+# regress out WM & CSF
+#cd ${output_path}/func
 
-fslmeants -i Prestats_AROMA_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -o WM_AROMA_${run}.txt -m WM_thr_${run}
+fslmeants -i ${output_path}/func/Prestats_AROMA_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -o ${output_path}/func/WM_AROMA_${run}.txt -m ${output_path}/func/WM_thr_${run}
 echo "done extracting WM"
 
-fslmeants -i Prestats_AROMA_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -o CSF_AROMA_${run}.txt -m CSF_thr_${run}
+fslmeants -i ${output_path}/func/Prestats_AROMA_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -o ${output_path}/func/CSF_AROMA_${run}.txt -m ${output_path}/func/CSF_thr_${run}
 echo "done extracting CSF"
 
-fsl_regfilt -i  Prestats_AROMA_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -d  WM_AROMA_${run}.txt -o WM_${run}_AROMA -f "1"
+fsl_regfilt -i  ${output_path}/func/Prestats_AROMA_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -d  ${output_path}/func/WM_AROMA_${run}.txt -o ${output_path}/func/WM_${run}_AROMA -f "1"
 echo "done regressing out WM"
 
-fsl_regfilt -i  WM_${run}_AROMA -d  CSF_AROMA_${run}.txt -o AROMA_${run} -f "1"
+fsl_regfilt -i  ${output_path}/func/WM_${run}_AROMA -d  ${output_path}/func/CSF_AROMA_${run}.txt -o ${output_path}/func/AROMA_${run} -f "1"
 echo "done regressing out CSF"
-rm -f WM_${run}_AROMA.nii.gz
+rm -f ${output_path}/func/WM_${run}_AROMA.nii.gz
 echo "done regressing out WM+CSF for ${sub} ${run}"
 
-## Run bandpass filtering (0.01 - 0.1 Hz)
-#hp_sigma=`python -c "print (((1/.01)/2)/$tr)"`
-#lp_sigma=`python -c "print (((1/.1)/2)/$tr)"`
-rm -f ${run}_AROMA_bptf.nii.gz
-fslmaths AROMA_${run} -Tmean tempMean
-3dBandpass -notrans -nodetrend -prefix ${run}_AROMA_bptf.nii.gz 0.01 0.1 AROMA_${run}.nii.gz
-fslmaths ${run}_AROMA_bptf.nii.gz -add tempMean ${run}_AROMA_bptf.nii.gz
-#fslmaths AROMA_${run} -bptf $hp_sigma $lp_sigma -add tempMean ${run}_AROMA_bptf
-rm -f tempMean.nii.gz AROMA_${run}.nii.gz
-echo "done 0.01-0.1 Hz filtering"
+## Run bandpass filtering (0.01 - 0.1 Hz) and alternatively, highpass filtering only (0.01 Hz)
+rm -f ${output_path}/func/${run}_AROMA_bptf.nii.gz ${output_path}/func/${run}_AROMA_hptf.nii.gz
+
+fslmaths ${output_path}/func/AROMA_${run} -Tmean ${output_path}/func/tempMean
+3dBandpass -notrans -nodetrend -prefix ${output_path}/func/${run}_AROMA_bptf.nii.gz 0.01 0.1 ${output_path}/func/AROMA_${run}.nii.gz
+fslmaths ${output_path}/func/${run}_AROMA_bptf.nii.gz -add ${output_path}/func/tempMean ${output_path}/func/${run}_AROMA_bptf.nii.gz
+echo "done 0.01-0.1 Hz filtering for ${sub} ${session} ${run}"
+3dBandpass -notrans -nodetrend -prefix ${output_path}/func/${run}_AROMA_hptf.nii.gz 0.01 1000 ${output_path}/func/AROMA_${run}.nii.gz
+echo "done 0.01 Hz Hz highpass filtering for ${sub} ${session} ${run}"
+fslmaths ${output_path}/func/${run}_AROMA_bptf.nii.gz -add ${output_path}/func/tempMean ${output_path}/func/${run}_AROMA_bptf.nii.gz
+fslmaths ${output_path}/func/${run}_AROMA_hptf.nii.gz -add ${output_path}/func/tempMean ${output_path}/func/${run}_AROMA_hptf.nii.gz
+rm -f ${output_path}/func/tempMean.nii.gz ${output_path}/func/AROMA_${run}.nii.gz
+
+# Transform bandpassed and highpassed data to MNI space
+flirt -in ${output_path}/func/${run}_AROMA_bptf -ref ${scripts_dir}/MNI152_T1_2mm_brain -out ${output_path}/func/${run}_AROMA_MNI_bptf -applyxfm -init ${output_path}/func/Prestats_AROMA_${run}.feat/reg/example_func2standard.mat -interp trilinear
+flirt -in ${output_path}/func/${run}_AROMA_hptf -ref ${scripts_dir}/MNI152_T1_2mm_brain -out ${output_path}/func/${run}_AROMA_MNI_hptf -applyxfm -init ${output_path}/func/Prestats_AROMA_${run}.feat/reg/example_func2standard.mat -interp trilinear
+echo "done transforming preprocessed data to standard space for ${sub} ${session} ${run}"
+
+# Compute percent signal change on highpassed MNI data
+fslmaths ${output_path}/func/${run}_AROMA_MNI_hptf.nii.gz -Tmean ${output_path}/func/mean_${run}.nii.gz
+fslmaths ${output_path}/func/${run}_AROMA_MNI_hptf.nii.gz -sub ${output_path}/func/mean_${run}.nii.gz ${output_path}/func/demeaned_${run}.nii.gz
+fslmaths ${output_path}/func/demeaned_${run}.nii.gz -div ${output_path}/func/mean_${run}.nii.gz ${output_path}/func/demeaned_divided_${run}.nii.gz
+fslmaths ${output_path}/func/demeaned_divided_${run} -mul 100 ${output_path}/func/${run}_MNI_percentSC
+rm -f ${output_path}/func/mean_${run}.nii.gz ${output_path}/func/std_${run}.nii.z ${output_path}/func/demeaned_${run}.nii.gz ${output_path}/func/demeaned_divided_${run}.nii.gz ${output_path}/func/AROMA_${run}.nii.gz
+echo "done conversion to percent signal change for ${run} ${session} ${sub}"
+
 end=$(date +%s)
 end_mins=`python -c "print (($end-$start)/60 )"`
 echo "done ICA-AROMA preprocessing for ${sub} ${run}! Total time: $end_mins minutes"
-
-
