@@ -4,8 +4,8 @@
 
 # Required inputs:
 # 1. Path to bids dataset folder
-# 3. Subject name (name of folder containing subject data)
-# 4. Run name (full name of fMRI file without nifti suffix)
+# 2. Subject name (name of folder containing subject data)
+# 3. Run name (full name of fMRI file without nifti suffix)
 
 usage() {
 	echo ""
