@@ -5,21 +5,21 @@
 
 **Setup**
 - Dataset should be organized in BIDS or BIDS-like format (e.g. dataset/subject/session/func contains all func files for a session)
-- this repository should be saved a subfolder within a folder called "scripts" that is within a parent folder that also contains "dataset" as in the above example
 - After cloning this repository, add the path to your bash startup script (.bash_profile on Mac or .bashrc on Linux), e.g. by adding these 2 lines (using your own path) to the script:
   
 PATH="/Users/ak4379/Documents/project/scripts/fMRI_preprocessing:${PATH}"
 PATH="/Users/ak4379/Documents/project/scripts/fMRI_preprocessing/iProc:${PATH}"
 
-- outputs are saved in "derivatives" folder within parent folder
+- After adding those lines to your bash startup, test setup by opening a terminal and typing "all_AROMA_preproc_singleSess" which you should output instructions for this function
 
 **Required software**
-- [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation), [freesurfer](https://surfer.nmr.mgh.harvard.edu/fswiki/DownloadAndInstall), python2.7 (+numpy), [AFNI](https://afni.nimh.nih.gov/)
-- If you have multiple versions of python installed, you can install numpy for version 2.7 by typing "python2.7 -m pip install numpy" in terminal
+- Required: [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation) and python2.7 (+numpy)
+- You must have one of the following installed: [AFNI](https://afni.nimh.nih.gov/) or [niimath](https://github.com/rordenlab/niimath)
+- Note: AFNI or niimath are used for bandpass temporal filtering; functions labeled with suffix "_niimath" use niimath without need to install AFNI
+- Ntoe: If you have multiple versions of python installed, you can install numpy for version 2.7 by typing "python2.7 -m pip install numpy" in terminal
 	
-
 **Running the scripts**
-- **all_AROMA_preproc** runs ICA-AROMA preprocessing on one run of fMRI data for data organized in BIDS or BIDS-like format. Must "source" this from the command line.
+- **all_AROMA_preproc_singleSess** runs ICA-AROMA preprocessing on one run of fMRI data for data organized in BIDS or BIDS-like format (for subjects who have just one session in the BIDS folder).
 - In iProc folder, there are scripts for more optimal processing of individual subjects with multiple sessions:
 -    **step1_run_alignment_onesub** creates common fMRI template across all sessions/runs and registers each run to it (+performs motion correction)
 -    **step2_ICA_AROMA_iProc_onesession** runs ICA-AROMA (plus regression of thresholded white matter and CSF)
