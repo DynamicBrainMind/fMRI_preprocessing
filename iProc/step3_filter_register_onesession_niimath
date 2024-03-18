@@ -1,0 +1,84 @@
+#! /bin/bash -f
+# Written by Aaron Kucyi
+# compatible with BIDS or BIDS-like organized data
+
+# Required inputs:
+# 1. Path to bids dataset folder 
+# 2. Subject name
+# 3. Session: Name of func session to process (all runs in this session)
+# 4. Anat session: Name of session to use for anatomical scan (for registration of all func runs/session)
+
+usage() {
+	echo ""
+	echo "Usage: step3_filter_register_onesession <path_to_bids_folder> <subject_name> <name_of_func_session> <name_of_anat_session>"
+	echo "example: step3_filter_register_onesession /work/kucyi/data/Hung_MW MW01 Session1 Session1"
+	echo "(4 inputs required)"
+	echo "This function performs temporal filtering, registration to MNI152 space, and compuates %SC for all BOLD runs within one session"
+	echo "The outputs include preprocessed data using bandpass-filtering (0.01-0.1 Hz) and highpass filtering only (at 0.01 Hz)"
+	echo "The anat session must be specified for the T1 scan to use for registration"
+	echo "output will be in <path_to_bids_folder>/derivatives/subject/iProc"
+}
+
+if [[ $# -eq 0 ]] ; then
+	usage
+	exit
+fi
+
+## Initate inputs, paths and output paths
+bids_path=$1
+sub=$2
+session=$3
+anat_session=$4
+path=`echo ${bids_path%/*}`
+func_path=${path}/derivatives/${sub}/iProc/${session}/func
+
+## run high-pass filtering and registration (using FEAT)
+runs=`find ${func_path} -name *mcf_template.nii*`
+for run in $runs
+do
+run_file=${run}
+run=`basename ${run_file}`
+run=${run%_mcf_template.*}
+echo "Creating FSF file for high-pass filtering for $sub $session $run"
+highpass=`which highpass.fsf`
+scripts_dir=${highpass%/*}
+sed -e "s/####SUBJECT####/${sub}/g" ${highpass} > ${func_path}/temp.fsf
+sed -e "s/####SESSION####/${session}/g" ${func_path}/temp.fsf > ${func_path}/temp2.fsf
+sed -e "s/####RUN####/${run}/g" ${func_path}/temp2.fsf > ${func_path}/temp3.fsf
+tr=`fslinfo ${run_file} | grep "^pixdim4" | awk '{print $2}'`
+echo "TR = ${tr}"
+volumes=`fslinfo ${run_file} | grep "^dim4" | awk '{print $2}'`
+echo "n volumes = ${volumes}"
+sed -e "s/####TR####/${tr}/g" ${func_path}/temp3.fsf > ${func_path}/temp4.fsf
+sed -e "s/####VOLUMES####/${volumes}/g" ${func_path}/temp4.fsf > ${func_path}/temp5.fsf
+sed -e "s+####PATH####+${path}+g" ${func_path}/temp5.fsf > ${func_path}/temp6.fsf
+sed -e "s+####FUNCDIR####+${func_path}+g" ${func_path}/temp6.fsf > ${func_path}/temp7.fsf
+sed -e "s+####ANATSESSION####+${anat_session}+g" ${func_path}/temp7.fsf > ${func_path}/temp8.fsf
+sed -e "s+####STANDARD####+${scripts_dir}+g" ${func_path}/temp8.fsf > ${func_path}/temp9.fsf
+sed -e "s/####VOLUMES####/${volumes}/g" ${func_path}/temp9.fsf > ${func_path}/${sub}_highpass_${run}.fsf
+rm -f ${func_path}/temp.fsf ${func_path}/temp2.fsf ${func_path}/temp3.fsf ${func_path}/temp4.fsf ${func_path}/temp5.fsf ${func_path}/temp6.fsf ${func_path}/temp7.fsf ${func_path}/temp8.fsf ${func_path}/temp9.fsf
+echo "running high-pass FEAT for ${sub} ${session} ${run}"
+feat ${func_path}/${sub}_highpass_${run}.fsf
+echo "done FEAT high-pass filtering and registration for ${sub} ${session} ${run}"
+
+## Run bandpass filtering (0.01 - 0.1 Hz)
+fslmaths ${func_path}/AROMA_${run} -Tmean ${func_path}/tempMean
+niimath ${output_path}/func/AROMA_${run} -bandpass 0.1 0.01 ${tr} ${output_path}/func/${run}_AROMA_bptf
+fslmaths ${func_path}/${run}_AROMA_bptf.nii.gz -add ${func_path}/tempMean ${func_path}/${run}_AROMA_bptf.nii.gz
+rm -f ${func_path}/tempMean.nii.gz
+
+## Transform bandpassed and highpassed data to MNI space
+flirt -in ${func_path}/Prestats_AROMA_${run}.feat/highpass.feat/filtered_func_data -ref ${scripts_dir}/MNI152_T1_2mm_brain -out ${func_path}/${sub}_AROMA_MNI_${run} -applyxfm -init ${func_path}/Prestats_AROMA_${run}.feat/highpass.feat/reg/example_func2standard.mat -interp trilinear
+flirt -in ${func_path}/${run}_AROMA_bptf -ref ${scripts_dir}/MNI152_T1_2mm_brain -out ${func_path}/${run}_AROMA_MNI_bptf -applyxfm -init ${func_path}/Prestats_AROMA_${run}.feat/highpass.feat/reg/example_func2standard.mat -interp trilinear
+echo "done transforming preprocessed data to standard space"
+
+## Compute percent signal change on highpassed MNI data
+fslmaths ${func_path}/${sub}_AROMA_MNI_${run}.nii.gz -Tmean ${func_path}/mean_${run}.nii.gz
+fslmaths ${func_path}/${sub}_AROMA_MNI_${run}.nii.gz -sub ${func_path}/mean_${run}.nii.gz ${func_path}/demeaned_${run}.nii.gz
+fslmaths ${func_path}/demeaned_${run}.nii.gz -div ${func_path}/mean_${run}.nii.gz ${func_path}/demeaned_divided_${run}.nii.gz
+fslmaths ${func_path}/demeaned_divided_${run} -mul 100 ${func_path}/${run}_MNI_percentSC
+rm -f ${func_path}/mean_${run}.nii.gz ${func_path}/std_${run}.nii.z ${func_path}/demeaned_${run}.nii.gz ${func_path}/demeaned_divided_${run}.nii.gz ${func_path}/AROMA_${run}.nii.gz
+echo "done conversion to percent signal change for ${run} ${session} ${sub}"
+done
+
+

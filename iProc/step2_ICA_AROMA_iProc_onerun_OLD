@@ -51,11 +51,6 @@ fi
 
 ## Set up Pre-AROMA FEAT preprocessing template
 cd ${func_path}
-#runs=`find *mcf_template.nii* | paste -sd " "`
-#for run in $run_name
-#do
-#run_file=${run}
-#run=${run%_mcf_template.*}
 echo "Creating FSF file for AROMA for $sub $session $run"
 cd ${path}/scripts/fMRI_preprocessing/iProc
 sed -e "s/####SUBJECT####/${sub}/g" Prestats_AROMA.fsf > temp.fsf
