@@ -16,7 +16,7 @@ PATH="/Users/ak4379/Documents/project/scripts/fMRI_preprocessing/iProc:${PATH}"
 - Required: [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation) and python2.7 (+numpy)
 - You must have one of the following installed: [AFNI](https://afni.nimh.nih.gov/) or [niimath](https://github.com/rordenlab/niimath)
 - Note: AFNI or niimath are used for bandpass temporal filtering; functions labeled with suffix "_niimath" use niimath without need to install AFNI
-- Ntoe: If you have multiple versions of python installed, you can install numpy for version 2.7 by typing "python2.7 -m pip install numpy" in terminal
+- Note: If you have multiple versions of python installed, you can install numpy for version 2.7 by typing "python2.7 -m pip install numpy" in terminal
 	
 **Running the scripts**
 - **all_AROMA_preproc_singleSess** runs ICA-AROMA preprocessing on one run of fMRI data for data organized in BIDS or BIDS-like format (for subjects who have just one session in the BIDS folder).
