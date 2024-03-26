@@ -59,7 +59,7 @@ run=${run%_mcf_template.*}
 #run="${run%.*}"
 #run=${run::${#run}-13}
 echo "current run being processed: ${run}"
-output_path=${path}/derivatives/${sub}/${session}
+output_path=${path}/derivatives/${sub}/iProc/${session}
 echo "Creating FSF file for AROMA for $sub $session $run"
 Prestats_AROMA=`which Prestats_AROMA_iProc.fsf`
 scripts_dir=${Prestats_AROMA%/*}
