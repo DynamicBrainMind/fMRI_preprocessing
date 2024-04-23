@@ -5,18 +5,19 @@
 # Required inputs:
 # 1. Path to bids dataset folder
 # 2. Subject name (name of folder containing subject data)
-# 3. Run name (full name of fMRI file without nifti suffix)
+# 3. Session name (name of folder for session)
+# 4. Run name (full name of fMRI file without nifti suffix)
 
 usage() {
 	echo ""
-	echo "Usage: all_AROMA_preproc_singleSess <bids_folder> <subject_name> <name_of_func_run>"
+	echo "Usage: all_AROMA_preproc_singleSess <bids_folder> <subject_name> <session> <name_of_func_run>"
 	echo ""
-	echo "example: all_AROMA_preproc_singleSess /work/kucyi/data/project/bids_data sub-001 bold_run1"
+	echo "example: all_AROMA_preproc_singleSess /work/kucyi/data/project/bids_data sub-001 ses-001 bold_run1"
 	echo ""
-	echo "(3 inputs required)"
+	echo "(4 inputs required)"
 	echo ""
 	echo "This function performs all preprocessing on one BOLD run (uses anat scan from same session for registration)"
-	echo "This is an alternative to all_AROMA_preproc for single-session data with no session subfolders in the BIDS folder"
+	echo "Use this for subjects with multiple session subfolders in the BIDS folder"
 	echo "output will be in <path_to_bids_folder>/derivatives/subject"
 }
 
@@ -30,25 +31,26 @@ start=$(date +%s)
 ## Initate inputs, paths and output paths
 bids_path=$1
 sub=$2
-run=$3
+sess=$3
+run=$4
+
 path=`echo ${bids_path%/*}`
 data_folder=`basename ${bids_path}`
 mkdir -p ${path}/derivatives
 mkdir -p ${path}/derivatives/${sub}
-mkdir -p ${path}/derivatives/${sub}
-mkdir -p ${path}/derivatives/${sub}/anat
-mkdir -p ${path}/derivatives/${sub}/func
-func_path=${path}/${data_folder}/${sub}/func
-output_path=${path}/derivatives/${sub}
+mkdir -p ${path}/derivatives/${sub}/${sess}
+mkdir -p ${path}/derivatives/${sub}/${sess}/anat
+mkdir -p ${path}/derivatives/${sub}/${sess}/func
+func_path=${path}/${data_folder}/${sub}/${sess}/func
+output_path=${path}/derivatives/${sub}/${sess}
 echo "path to subject/session is $1/$2"
 echo "output path is set to $output_path"
-echo "entering subject path ${path}/${data_folder}/${sub}"
-cd ${path}/${data_folder}/${sub}
+echo "subject path is ${path}/${data_folder}/${sub}/${sess}"
 
 ## Segment T1 into WM, CSF, GM (if not already done)
 if [ ! -f ${output_path}/anat/anat_brain.nii.gz ]; then
 	echo "performing brain extraction for ${sub}"
-	anat_file=`find ${path}/${data_folder}/${sub}/anat -name "*.nii*"`
+	anat_file=`find ${path}/${data_folder}/${sub}/${sess}/anat -name "*.nii*"`
 	bet ${anat_file} ${output_path}/anat/anat_brain -B -f 0.25 -g 0
 	echo "performing FAST segmentation for ${sub}"
 	fast -t 1 -g -o ${output_path}/anat/anat_brain.nii.gz
@@ -58,13 +60,13 @@ else
 fi
 
 ## Set up Pre-AROMA FEAT preprocessing template
-run_file=`find ${path}/${data_folder}/${sub}/func -name "${run}*nii*"`
+run_file=`find ${path}/${data_folder}/${sub}/${sess}/func -name "${run}*nii*"`
 echo "fMRI file is $run_file"
 # remove prior .fsf files and Prestats folders
 rm -f ${output_path}/func/*.fsf
 rm -r -f ${output_path}/func/Prestats_AROMA_${run}.feat
 echo "Creating FSF file for AROMA subject: " $sub
-Prestats_AROMA=`which Prestats_AROMA_singleSess.fsf`
+Prestats_AROMA=`which Prestats_AROMA_multiSess.fsf`
 scripts_dir=${Prestats_AROMA%/*}
 echo "scripts directory: ${scripts_dir}"
 sed -e "s/####SUBJECT####/${sub}/g" ${Prestats_AROMA} > ${output_path}/temp2.fsf
@@ -78,10 +80,11 @@ sed -e "s/####VOLUMES####/${volumes}/g" ${output_path}/temp4.fsf > ${output_path
 sed -e "s+####PATH####+${path}+g" ${output_path}/temp5.fsf > ${output_path}/temp6.fsf
 sed -e "s+####FUNCDIR####+${func_path}+g" ${output_path}/temp6.fsf > ${output_path}/temp7.fsf
 sed -e "s+####STANDARD####+${scripts_dir}+g" ${output_path}/temp7.fsf > ${output_path}/temp8.fsf
-sed -e "s/####VOLUMES####/${volumes}/g" ${output_path}/temp8.fsf > ${output_path}/${sub}_Prestats_AROMA_${run}.fsf
+sed -e "s+####SESSION####+${sess}+g" ${output_path}/temp8.fsf > ${output_path}/temp9.fsf
+sed -e "s/####VOLUMES####/${volumes}/g" ${output_path}/temp9.fsf > ${output_path}/${sub}_Prestats_AROMA_${run}.fsf
 mv ${output_path}/${sub}_Prestats_AROMA_${run}.fsf ${output_path}/func
 rm -f ${output_path}/temp1.fsf ${output_path}/temp2.fsf ${output_path}/temp3.fsf ${output_path}/temp4.fsf 
-rm -f ${output_path}/temp5.fsf ${output_path}/temp6.fsf ${output_path}/temp7.fsf ${output_path}/temp8.fsf 
+rm -f ${output_path}/temp5.fsf ${output_path}/temp6.fsf ${output_path}/temp7.fsf ${output_path}/temp8.fsf ${output_path}/temp9.fsf 
 echo "done making FEAT setup for ${sub} ${run}"
 
 ## Run FEAT for pre-AROMA

@@ -42,8 +42,8 @@ func_path=${path}/${data_folder}/${sub}/func
 output_path=${path}/derivatives/${sub}
 echo "path to subject/session is $1/$2"
 echo "output path is set to $output_path"
-echo "entering subject path ${path}/${data_folder}/${sub}"
-cd ${path}/${data_folder}/${sub}
+#echo "entering subject path ${path}/${data_folder}/${sub}"
+#cd ${path}/${data_folder}/${sub}
 
 ## Segment T1 into WM, CSF, GM (if not already done)
 if [ ! -f ${output_path}/anat/anat_brain.nii.gz ]; then
