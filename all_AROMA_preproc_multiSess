@@ -116,6 +116,8 @@ fslmaths ${output_path}/func/WM_func_${run} -thr $wm_thr -bin ${output_path}/fun
 fslmaths ${output_path}/func/CSF_func_${run} -thr $csf_thr -bin ${output_path}/func/CSF_thr_${run}
 
 # regress out WM & CSF
+#cd ${output_path}/func
+
 fslmeants -i ${output_path}/func/Prestats_AROMA_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -o ${output_path}/func/WM_AROMA_${run}.txt -m ${output_path}/func/WM_thr_${run}
 echo "done extracting WM"
 
@@ -138,7 +140,7 @@ fslmaths ${output_path}/func/AROMA_${run} -Tmean ${output_path}/func/tempMean
 fslmaths ${output_path}/func/${run}_AROMA_bptf.nii.gz -add ${output_path}/func/tempMean ${output_path}/func/${run}_AROMA_bptf.nii.gz
 echo "done 0.01-0.1 Hz filtering for ${sub} ${session} ${run}"
 3dBandpass -notrans -nodetrend -prefix ${output_path}/func/${run}_AROMA_hptf.nii.gz 0.01 1000 ${output_path}/func/AROMA_${run}.nii.gz
-echo "done 0.01 Hz highpass filtering for ${sub} ${session} ${run}"
+echo "done 0.01 Hz Hz highpass filtering for ${sub} ${session} ${run}"
 fslmaths ${output_path}/func/${run}_AROMA_bptf.nii.gz -add ${output_path}/func/tempMean ${output_path}/func/${run}_AROMA_bptf.nii.gz
 fslmaths ${output_path}/func/${run}_AROMA_hptf.nii.gz -add ${output_path}/func/tempMean ${output_path}/func/${run}_AROMA_hptf.nii.gz
 rm -f ${output_path}/func/tempMean.nii.gz ${output_path}/func/AROMA_${run}.nii.gz
