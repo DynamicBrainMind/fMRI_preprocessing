@@ -136,7 +136,6 @@ echo "done regressing out WM+CSF for ${sub} ${run}"
 rm -f ${output_path}/func/${run}_AROMA_bptf.nii.gz ${output_path}/func/${run}_AROMA_hptf.nii.gz
 fslmaths ${output_path}/func/AROMA_${run} -Tmean ${output_path}/func/tempMean
 niimath ${output_path}/func/AROMA_${run} -bandpass 0.1 0.01 ${tr} ${output_path}/func/${run}_AROMA_bptf
-fslmaths ${output_path}/func/${run}_AROMA_bptf.nii.gz -add ${output_path}/func/tempMean ${output_path}/func/${run}_AROMA_bptf.nii.gz
 echo "done 0.01-0.1 Hz filtering for ${sub} ${session} ${run}"
 niimath ${output_path}/func/AROMA_${run} -bandpass 0 0.01 ${tr} ${output_path}/func/${run}_AROMA_hptf
 echo "done 0.01 Hz Hz highpass filtering for ${sub} ${session} ${run}"
