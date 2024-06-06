@@ -1,0 +1,47 @@
+#! /bin/bash -f
+# Written by Aaron Kucyi
+# Extract percent signal change (from preprocessed data in MNI space) from one ROI 
+
+# Required inputs:
+# 1. Path to dataset folder (parent folder containing subject>session>run subfolders)
+# 2. Name of folder containing organized data (in bids or bids-like format)
+# 3. Subject name
+# 4. Full path to ROI file to extract
+# 5. Name of ROI file
+# 6. Name of ROI for output files
+
+## Initate inputs, paths and output paths
+path=$1
+data_folder=$2
+sub=$3
+roi_path=$4
+roi=$5
+roi_name=$6
+mkdir -p ${path}/derivatives/${sub}/iProc/ROI_percentSC
+outpath=${path}/derivatives/${sub}/iProc/ROI_percentSC
+
+## get sessions
+cd ${path}/${data_folder}/${sub}
+sessions=`printf '%s\n' * | paste -sd " "`
+
+## compute mean within each run in each session
+for session in $sessions
+do
+func_path=${path}/derivatives/${sub}/iProc/${session}/func
+# get preprocessed MNI percent signal change nifti files for each run in this session
+cd ${func_path}
+runs=`find *MNI_percentSC.nii* | paste -sd " "`
+# loop through runs
+for run in $runs
+do
+run_file=${run}
+run=${run%_MNI_percentSC.*}
+3dmaskave -median -quiet -mask ${roi_path}/${roi} ${run_file} > ${outpath}/${roi_name}_${session}_${run}_median.txt
+#fslmeants -i ${run_file} -o ${outpath}/${roi_name}_${session}_${run}.txt -m ${roi_path}/${roi}
+echo "done computing ${roi} mean time series for ${sub} ${session} ${run}"
+done
+done
+
+
+
+

@@ -1,0 +1,53 @@
+#! /bin/bash -f
+# Move .annot files from fsaverage6 surface space to MNI152 volume space
+# Required inputs:
+# 1. Path to folder that contains .annot file (will also be output path)
+# 2. Name of left hemisphere .annot file within the folder to move to MNI152 space
+# 3. Name of left hemisphere .annot file within the folder to move to MNI152 space
+
+## Initate inputs
+path=$1
+lhannot=$2
+rhannot=$3
+
+# convert annotation to labels (output label to freesurfer subjects fsaverage6 folder)
+mri_annotation2label --subject fsaverage6 --hemi lh --annotation ${path}/${lhannot} --labelbase lh_temp
+mri_annotation2label --subject fsaverage6 --hemi rh --annotation ${path}/${rhannot} --labelbase rh_temp
+echo "done coverting annotation to label"
+
+# get list of all label files (for each network)
+lh_labels=`find ${SUBJECTS_DIR}/fsaverage6/label/*lh_temp*label* -printf '%f\n' | paste -sd " "`
+rh_labels=`find ${SUBJECTS_DIR}/fsaverage6/label/*rh_temp*label* -printf '%f\n' | paste -sd " "`
+
+# convert each label file to MNI152 space (loop through each network)
+for labels in $lh_labels
+do
+# lh_label=${labels%.*} # remove suffix for output file
+network_no=`echo ${labels//[!0-9]/}` # get network number for output file
+mri_label2vol --label ${SUBJECTS_DIR}/fsaverage6/label/${labels} --temp $FSLDIR/data/standard/MNI152_T1_2mm.nii.gz --reg $FREESURFER_HOME/average/mni152.register.dat --fillthresh 0 --proj abs -3 -2 .1 --subject fsaverage6 --hemi lh --o ${path}/lh_network-${network_no}.nii.gz
+done
+echo "done converting LH labels to MNI152 space"
+
+for labels in $rh_labels
+do
+# rh_label=${labels%.*}
+network_no=`echo ${labels//[!0-9]/}` # get network number for output file
+mri_label2vol --label ${SUBJECTS_DIR}/fsaverage6/label/${labels} --temp $FSLDIR/data/standard/MNI152_T1_2mm.nii.gz --reg $FREESURFER_HOME/average/mni152.register.dat --fillthresh 0 --proj abs -3 -2 .1 --subject fsaverage6 --hemi rh --o ${path}/rh_network-${network_no}.nii.gz
+echo "done converting RH labels to MNI152 space"
+done
+
+# combine .nii files across hemispheres
+for labels in $lh_labels
+do
+network_no=`echo ${labels//[!0-9]/}`
+fslmaths ${path}/lh_network-${network_no} -add ${path}/rh_network-${network_no} -bin ${path}/network-${network_no}
+done
+
+# delete temporary label files
+rm -f ${SUBJECTS_DIR}/fsaverage6/label/*lh_temp*
+rm -f ${SUBJECTS_DIR}/fsaverage6/label/*rh_temp*
+
+
+
+
+

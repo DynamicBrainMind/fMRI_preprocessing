@@ -1,0 +1,68 @@
+#! /bin/bash -f
+# Written by Aaron Kucyi
+# Extract percent signal change (from preprocessed data in MNI space) from one ROI 
+
+# Required inputs:
+# 1. Path to bids dataset folder
+# 2. Subject name
+# 3. Full path to ROI file to extract
+# 4. Name of ROI file
+# 5. Name of ROI for output files
+
+usage() {
+	echo ""
+	echo "Usage: extract_ROI_percentSC_onesub_multiSess <bids_folder> <subject_name> <path_to_roi_file> <roi_file_name> <roi_output_name>"
+	echo ""
+	echo "example: extract_ROI_percentSC_onesub_multiSess /work/kucyi/data/project/bids_data sub-001 /work/kucyi/ROIs YeoDMN YeoDMN"
+	echo ""
+	echo "(5 inputs required)"
+	echo ""
+	echo "This function extracts the mean time series from an ROI using preprocessed fMRI data in MNI152 space (as obtained from all_AROMA_preproc)"
+	echo "Use this for subjects with multiple session subfolders in the BIDS folder"
+	echo "output will be in <path_to_bids_folder>/derivatives/subject/session/func/ROI_percentSC"
+}
+
+if [[ $# -eq 0 ]] ; then
+	usage
+	exit
+fi
+
+## Initate inputs, paths and output paths
+bids_path=$1
+sub=$2
+roi_path=$3
+roi=$4
+roi_name=$5
+path=`echo ${bids_path%/*}`
+data_folder=`basename ${bids_path}`
+
+## get paths to all sessions
+session_path=`find ${path}/derivatives/${sub} -name ses*`
+echo "sessions are ${session_path}"
+
+## compute mean within each run in each session
+for session in $session_path
+do
+	session=`basename ${session}`
+	echo "current session is ${session}"
+	mkdir -p ${path}/derivatives/${sub}/${session}/func/ROI_percentSC
+	outpath=${path}/derivatives/${sub}/${session}/func/ROI_percentSC	
+	func_path=${path}/derivatives/${sub}/${session}/func
+	# get preprocessed MNI percent signal change nifti files for each run in this session
+	runs=`find ${func_path} -name *MNI_percentSC.nii*`
+	echo "runs are ${runs}"
+	# loop through runs
+		for run in $runs
+		do
+			run_file=${run}
+			run=`basename ${run_file}`
+			run="${run%.*}"
+			run="${run%.*}"
+			fslmeants -i ${run_file} -o ${outpath}/${roi_name}_${run}.txt -m ${roi_path}/${roi}
+			echo "done computing ${roi} mean time series for ${sub} ${session} ${run}"
+		done
+done
+
+
+
+

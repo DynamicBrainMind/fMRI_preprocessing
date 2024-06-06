@@ -1,0 +1,19 @@
+#! /bin/bash -f
+# Move a nifti file in MNI152 volumetric space to fsaverage6 surface space
+# You can then use Matlab function Surf_TaskMap_nii2wb to convert to dscalar for workbench
+# Required inputs:
+# 1. Path to folder that contains nifti file in MNI152 space
+# 2. Name of file within the folder to move to fsaverage6 (without .nii.gz suffix)
+
+## Initate inputs
+path=$1
+map=$2
+
+mri_vol2surf --mov ${path}/${map}.nii.gz --hemi lh --srcreg ${FREESURFER_HOME}/average/mni152.register.dat --out ${path}/lh.${map}_fsaverage.nii
+mri_vol2surf --mov ${path}/${map}.nii.gz --hemi rh --srcreg ${FREESURFER_HOME}/average/mni152.register.dat --out ${path}/rh.${map}_fsaverage.nii
+echo "done converting FEAT zstat map from MNI152 to fsaverage for ${sub}"
+
+mri_surf2surf --mapmethod nnf --srcsubject fsaverage --trgsubject fsaverage6 --hemi lh --sval ${path}/lh.${map}_fsaverage.nii --tval ${path}/lh.${map}_fsaverage6.nii
+mri_surf2surf --mapmethod nnf --srcsubject fsaverage --trgsubject fsaverage6 --hemi rh --sval ${path}/rh.${map}_fsaverage.nii --tval ${path}/rh.${map}_fsaverage6.nii
+echo "done coverting from fsaverage to fsaverage6 for ${sub}"
+
