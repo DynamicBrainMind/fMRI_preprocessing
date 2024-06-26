@@ -2,7 +2,7 @@
 
 usage() {
     echo ""
-	echo "run_recon.sh <subject_name> <session_name> <bids_folder>"
+	echo "run_recon.sh <bids_folder> <subject_name> <session_name>"
 	echo ""
 	echo "3 inputs required: (1) bids path; (2) subject; (3) session name (required for multi-session data; otherwise leave blank)"
 	echo ""
