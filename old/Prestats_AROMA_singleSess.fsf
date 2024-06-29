@@ -30,7 +30,7 @@ set fmri(featwatcher_yn) 1
 set fmri(sscleanup_yn) 0
 
 # Output directory
-set fmri(outputdir) "####OUTPUTPATH####/func/Prestats_AROMA_####RUN####.feat"
+set fmri(outputdir) "####PATH####/derivatives/####SUBJECT####/func/Prestats_AROMA_####RUN####.feat"
 
 # TR(s)
 set fmri(tr) ####TR#### 
@@ -273,7 +273,7 @@ set feat_files(1) "####FUNCDIR####/####RUN####"
 set fmri(confoundevs) 0
 
 # Subject's structural image for analysis 1
-set highres_files(1) "####ANATDIR####/anat_brain"
+set highres_files(1) "####PATH####/derivatives/####SUBJECT####/anat/anat_brain"
 
 # EV 1 title
 set fmri(evtitle1) ""

@@ -21,7 +21,7 @@ set fmri(analysis) 1
 set fmri(relative_yn) 0
 
 # Balloon help
-set fmri(help_yn) 0
+set fmri(help_yn) 1
 
 # Run Featwatcher
 set fmri(featwatcher_yn) 1
@@ -30,7 +30,7 @@ set fmri(featwatcher_yn) 1
 set fmri(sscleanup_yn) 0
 
 # Output directory
-set fmri(outputdir) "####PATH####/derivatives/####SUBJECT####/iProc/####SESSION####/func/Prestats_AROMA_####RUN####.feat"
+set fmri(outputdir) "####PATH####/derivatives/####SUBJECT####/####SESSION####/func/Prestats_AROMA_####RUN####.feat"
 
 # TR(s)
 set fmri(tr) ####TR#### 
@@ -70,7 +70,7 @@ set fmri(noisear) 0.34
 # Motion correction
 # 0 : None
 # 1 : MCFLIRT
-set fmri(mc) 0
+set fmri(mc) 1
 
 # Spin-history (currently obsolete)
 set fmri(sh_yn) 0
@@ -239,7 +239,7 @@ set fmri(regstandard_yn) 1
 set fmri(alternateReference_yn) 0
 
 # Standard image
-set fmri(regstandard) "####PATH####/scripts/fMRI_preprocessing/MNI152_T1_2mm_brain"
+set fmri(regstandard) "####STANDARD####/MNI152_T1_2mm_brain"
 
 # Search space for registration to standard space
 # 0   : No search
@@ -267,13 +267,13 @@ set fmri(totalVoxels) 40550400
 set fmri(ncopeinputs) 0
 
 # 4D AVW data or FEAT directory (1)
-set feat_files(1) "####PATH####/derivatives/####SUBJECT####/iProc/####SESSION####/func/####RUN####_mcf_template"
+set feat_files(1) "####FUNCDIR####/####RUN####"
 
 # Add confound EVs text file
 set fmri(confoundevs) 0
 
 # Subject's structural image for analysis 1
-set highres_files(1) "####PATH####/derivatives/####SUBJECT####/####ANATSESSION####/anat/anat_brain"
+set highres_files(1) "####PATH####/derivatives/####SUBJECT####/####ANATSESS####/anat/anat_brain"
 
 # EV 1 title
 set fmri(evtitle1) ""
