@@ -1,22 +1,28 @@
 #! /bin/bash -f
 # Written by Aaron Kucyi
-# For BIDS-organized data with a  single session for each subject (i.e., no subfolder for sessions within BIDS folder)
+# Preprocessing, including ICA-AROMA, For BIDS-organized data
+# Includes fieldmap correct for opposite-phase B0 images
 
 # Required inputs:
 # 1. Path to bids dataset folder
 # 2. Subject name (name of folder containing subject data)
 # 3. Run name (full name of fMRI file without nifti suffix)
+# 4. Run number (e.g. run-01)
+# 5. Acquisition parameter file for fieldmap correction (including full path)
+# 6. (for multi-session data only): fMRI session name
+# 7. (for multi-session data only): T1 session name
 
 usage() {
 	echo ""
-	echo "Usage: all_AROMA_preproc_singleSess <bids_folder> <subject_name> <name_of_func_run>"
+	echo "Usage: all_AROMA_preproc_OppPhaseB0 <bids_folder> <subject_name> <name_of_func_run> <run_num> <acq_param_file> <fMRI_session_name> <anat_session_name>"
 	echo ""
-	echo "example: all_AROMA_preproc_singleSess /work/kucyi/data/project/bids_data sub-001 bold_run1"
+	echo "(5 inputs required for single-session data; 7 inputs required for multi-session data)"
+	echo "For single-session data, enter 5 inputs only"
 	echo ""
-	echo "(3 inputs required)"
+	echo "example for single-session data: all_AROMA_preproc_OppPhaseB0 /work/kucyi/data/project/bids_data sub-001 bold_run-01 run-01 /work/kucyi/data/project/scripts/acq_params.txt"
 	echo ""
-	echo "This function performs all preprocessing on one BOLD run (uses anat scan from same session for registration)"
-	echo "This is an alternative to all_AROMA_preproc for single-session data with no session subfolders in the BIDS folder"
+	echo "This function performs all preprocessing on one BOLD run, including fieldmap correction for opposite-phase B0 images"
+	echo ""
 	echo "output will be in <path_to_bids_folder>/derivatives/subject"
 }
 
@@ -31,8 +37,10 @@ start=$(date +%s)
 bids_path=$1
 sub=$2
 run=$3
-sess=${4:-1}
-anat_sess=${5:-1}
+runnum=$4
+acq_file=$5
+sess=${6:-1}
+anat_sess=${7:-1}
 
 path=`echo ${bids_path%/*}`
 data_folder=`basename ${bids_path}`
@@ -45,8 +53,11 @@ if [ $sess == 1 ]; then
 	mkdir -p ${path}/derivatives/${sub}/anat
 	anat_path=${path}/${data_folder}/${sub}/anat
 	func_path=${path}/${data_folder}/${sub}/func
+	fmap_path=${path}/${data_folder}/${sub}/fmap
 	output_path=${path}/derivatives/${sub}
 	anat_output=${path}/derivatives/${sub}/anat
+	mkdir -p ${path}/derivatives/${sub}/fmap
+	fmap_outpath=${path}/derivatives/${sub}/fmap	
 else
 	mkdir -p ${path}/derivatives/${sub}/${sess}
 	mkdir -p ${path}/derivatives/${sub}/${anat_sess}/anat
@@ -72,6 +83,17 @@ else
 	echo "skipping segmentation (already done)"
 fi
 
+## Run top-up and prepare for FEAT unwarping
+fslmerge -t ${fmap_outpath}/AP_PA_${runnum} ${fmap_path}/${sub}_dir-AP_${runnum}_epi.nii.gz ${fmap_path}/${sub}_dir-PA_${runnum}_epi.nii.gz 
+echo "done merging AP and PA fieldmaps for ${runnum}"
+topup --imain=${fmap_outpath}/AP_PA_${runnum} --datain=${acq_file} --config=b02b0.cnf --fout=${fmap_outpath}/fieldmap_${runnum} --iout=${fmap_outpath}/AP_PA_unwarped_${runnum}
+echo "done running topup"
+fslmaths ${fmap_outpath}/fieldmap_${runnum} -mul 6.28 ${fmap_outpath}/fieldmap_${runnum}_rads
+echo "done converting to rad/s"
+fslmaths ${fmap_outpath}/AP_PA_unwarped_${runnum} -Tmean ${fmap_outpath}/unwarped_${runnum}_mag
+bet2 ${fmap_outpath}/unwarped_${runnum}_mag ${fmap_outpath}/unwarped_${runnum}_mag_brain
+echo "done obtaining fieldmap magnitude image"
+
 ## Set up Pre-AROMA FEAT preprocessing template
 run_file=`find ${func_path} -name "${run}*nii*"`
 echo "fMRI file is $run_file"
@@ -79,14 +101,26 @@ echo "fMRI file is $run_file"
 rm -f ${output_path}/func/*.fsf
 rm -r -f ${output_path}/func/Prestats_AROMA_${run}.feat
 echo "Creating FSF file for AROMA subject: " $sub
-Prestats_AROMA=`which Prestats_AROMA.fsf`
+Prestats_AROMA=`which Prestats_AROMA_OppPhaseB0.fsf`
 scripts_dir=${Prestats_AROMA%/*}
 echo "scripts directory: ${scripts_dir}"
+# Get TE and and EPI dwell time in ms from JSON file (for unwarping)
+json_file=`echo ${run%.*.*}.json`
+te=($(jq -r .EchoTime ${func_path}/${json_file}))
+te=`python3 -c "print ($te*1000 )"`
+echo "TE is ${te} ms"
+dwell=($(jq -r .EffectiveEchoSpacing ${func_path}/${json_file}))
+dwell=`python3 -c "print ($dwell*1000 )"`
+echo "EPI dwell time is ${dwell} ms" 
+# Get TR and volumes
 tr=`fslinfo ${func_path}/${run} | grep "^pixdim4" | awk '{print $2}'`
 echo "TR = ${tr}"
 volumes=`fslinfo ${func_path}/${run} | grep "^dim4" | awk '{print $2}'`
 echo "n volumes = ${volumes}"
 cp ${Prestats_AROMA} ${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf
+sed -i " " "s/####RUNNUM####/${runnum}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+sed -i " " "s/####TE####/${te}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+sed -i " " "s/####DWELL####/${dwell}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
 sed -i " " "s/####TR####/${tr}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
 sed -i " " "s/####VOLUMES####/${volumes}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
 sed -i " " "s/####RUN####/${run}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
@@ -94,20 +128,6 @@ sed -i " " "s+####OUTPUTPATH####+${output_path}+g" "${output_path}/func/${sub}_P
 sed -i " " "s+####STANDARD####+${scripts_dir}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
 sed -i " " "s+####FUNCDIR####+${func_path}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
 sed -i " " "s+####ANATDIR####+${anat_output}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-
-#sed -i " "  "s/XX/${subject}/g" "${design_dir}/fieldmap_corr_sub-${subject}_ses-${session_no_orig}_run-${run}.fsf"
-#sed -i " "  "s/YY/${session_no_orig}/g" "${design_dir}/fieldmap_corr_sub-${subject}_ses-${session_no_orig}_run-${run}.fsf"
-#sed -e "s/####SUBJECT####/${sub}/g" ${Prestats_AROMA} > ${output_path}/temp2.fsf
-#sed -e "s/####RUN####/${run}/g" ${output_path}/temp2.fsf > ${output_path}/temp3.fsf
-#sed -e "s/####TR####/${tr}/g" ${output_path}/temp3.fsf > ${output_path}/temp4.fsf
-#sed -e "s/####VOLUMES####/${volumes}/g" ${output_path}/temp4.fsf > ${output_path}/temp5.fsf
-#sed -e "s+####PATH####+${path}+g" ${output_path}/temp5.fsf > ${output_path}/temp6.fsf
-#sed -e "s+####FUNCDIR####+${func_path}+g" ${output_path}/temp6.fsf > ${output_path}/temp7.fsf
-#sed -e "s+####STANDARD####+${scripts_dir}+g" ${output_path}/temp7.fsf > ${output_path}/temp8.fsf
-#sed -e "s/####VOLUMES####/${volumes}/g" ${output_path}/temp8.fsf > ${output_path}/${sub}_Prestats_AROMA_${run}.fsf
-#mv ${output_path}/${sub}_Prestats_AROMA_${run}.fsf ${output_path}/func
-#rm -f ${output_path}/temp1.fsf ${output_path}/temp2.fsf ${output_path}/temp3.fsf ${output_path}/temp4.fsf 
-#rm -f ${output_path}/temp5.fsf ${output_path}/temp6.fsf ${output_path}/temp7.fsf ${output_path}/temp8.fsf 
 echo "done making FEAT setup for ${sub} ${run}"
 
 ## Run FEAT for pre-AROMA
@@ -142,8 +162,6 @@ fslmaths ${output_path}/func/WM_func_${run} -thr $wm_thr -bin ${output_path}/fun
 fslmaths ${output_path}/func/CSF_func_${run} -thr $csf_thr -bin ${output_path}/func/CSF_thr_${run}
 
 # regress out WM & CSF
-#cd ${output_path}/func
-
 fslmeants -i ${output_path}/func/Prestats_AROMA_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -o ${output_path}/func/WM_AROMA_${run}.txt -m ${output_path}/func/WM_thr_${run}
 echo "done extracting WM"
 
