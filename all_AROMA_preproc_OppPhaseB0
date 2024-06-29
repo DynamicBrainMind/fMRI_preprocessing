@@ -99,7 +99,7 @@ run_file=`find ${func_path} -name "${run}*nii*"`
 echo "fMRI file is $run_file"
 # remove prior .fsf files and Prestats folders
 rm -f ${output_path}/func/*.fsf
-rm -r -f ${output_path}/func/Prestats_AROMA_${run}.feat
+rm -r -f ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat
 echo "Creating FSF file for AROMA subject: " $sub
 Prestats_AROMA=`which Prestats_AROMA_OppPhaseB0.fsf`
 scripts_dir=${Prestats_AROMA%/*}
@@ -132,7 +132,7 @@ echo "done making FEAT setup for ${sub} ${run}"
 
 ## Run FEAT for pre-AROMA
 echo "running Pre-AROMA FEAT preprocessing"
-feat ${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf
+feat ${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf
 echo "done FEAT for AROMA pipeline, ${sub} ${run}: check registration and motion"
 
 # Run ICA
