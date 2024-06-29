@@ -117,17 +117,17 @@ tr=`fslinfo ${func_path}/${run} | grep "^pixdim4" | awk '{print $2}'`
 echo "TR = ${tr}"
 volumes=`fslinfo ${func_path}/${run} | grep "^dim4" | awk '{print $2}'`
 echo "n volumes = ${volumes}"
-cp ${Prestats_AROMA} ${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf
-sed -i " " "s/####RUNNUM####/${runnum}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-sed -i " " "s/####TE####/${te}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-sed -i " " "s/####DWELL####/${dwell}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-sed -i " " "s/####TR####/${tr}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-sed -i " " "s/####VOLUMES####/${volumes}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-sed -i " " "s/####RUN####/${run}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-sed -i " " "s+####OUTPUTPATH####+${output_path}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-sed -i " " "s+####STANDARD####+${scripts_dir}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-sed -i " " "s+####FUNCDIR####+${func_path}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-sed -i " " "s+####ANATDIR####+${anat_output}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+cp ${Prestats_AROMA} ${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf
+sed -i " " "s/####RUNNUM####/${runnum}/g" "${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf"
+sed -i " " "s/####TE####/${te}/g" "${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf"
+sed -i " " "s/####DWELL####/${dwell}/g" "${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf"
+sed -i " " "s/####TR####/${tr}/g" "${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf"
+sed -i " " "s/####VOLUMES####/${volumes}/g" "${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf"
+sed -i " " "s/####RUN####/${run}/g" "${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf"
+sed -i " " "s+####OUTPUTPATH####+${output_path}+g" "${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf"
+sed -i " " "s+####STANDARD####+${scripts_dir}+g" "${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf"
+sed -i " " "s+####FUNCDIR####+${func_path}+g" "${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf"
+sed -i " " "s+####ANATDIR####+${anat_output}+g" "${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf"
 echo "done making FEAT setup for ${sub} ${run}"
 
 ## Run FEAT for pre-AROMA
@@ -136,13 +136,13 @@ feat ${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf
 echo "done FEAT for AROMA pipeline, ${sub} ${run}: check registration and motion"
 
 # Run ICA
-python2.7 ${scripts_dir}/ICA-AROMA-master/ICA_AROMA.py -feat ${output_path}/func/Prestats_AROMA_${run}.feat -out ${output_path}/func/Prestats_AROMA_${run}.feat/ICA_AROMA
+python2.7 ${scripts_dir}/ICA-AROMA-master/ICA_AROMA.py -feat ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat -out ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat/ICA_AROMA
 echo "done ICA for ${sub} ${run}"
 
 ## Threshold WM and CSF volumes (set WM and CSF volumes to 198000 and 20000)
 # register WM and CSF to func
-flirt -in ${anat_output}/anat_brain_pve_0.nii.gz -ref ${output_path}/func/Prestats_AROMA_${run}.feat/example_func.nii.gz -applyxfm -init ${output_path}/func/Prestats_AROMA_${run}.feat/reg/highres2example_func.mat -out ${output_path}/func/CSF_func_${run}
-flirt -in ${anat_output}/anat_brain_pve_2.nii.gz -ref ${output_path}/func/Prestats_AROMA_${run}.feat/example_func.nii.gz -applyxfm -init ${output_path}/func/Prestats_AROMA_${run}.feat/reg/highres2example_func.mat -out ${output_path}/func/WM_func_${run}
+flirt -in ${anat_output}/anat_brain_pve_0.nii.gz -ref ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat/example_func.nii.gz -applyxfm -init ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat/reg/highres2example_func.mat -out ${output_path}/func/CSF_func_${run}
+flirt -in ${anat_output}/anat_brain_pve_2.nii.gz -ref ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat/example_func.nii.gz -applyxfm -init ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat/reg/highres2example_func.mat -out ${output_path}/func/WM_func_${run}
 final_wm_vol=198000
 final_csf_vol=20000
 # get volume of unthresholded WM and CSF
@@ -162,13 +162,13 @@ fslmaths ${output_path}/func/WM_func_${run} -thr $wm_thr -bin ${output_path}/fun
 fslmaths ${output_path}/func/CSF_func_${run} -thr $csf_thr -bin ${output_path}/func/CSF_thr_${run}
 
 # regress out WM & CSF
-fslmeants -i ${output_path}/func/Prestats_AROMA_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -o ${output_path}/func/WM_AROMA_${run}.txt -m ${output_path}/func/WM_thr_${run}
+fslmeants -i ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -o ${output_path}/func/WM_AROMA_${run}.txt -m ${output_path}/func/WM_thr_${run}
 echo "done extracting WM"
 
-fslmeants -i ${output_path}/func/Prestats_AROMA_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -o ${output_path}/func/CSF_AROMA_${run}.txt -m ${output_path}/func/CSF_thr_${run}
+fslmeants -i ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -o ${output_path}/func/CSF_AROMA_${run}.txt -m ${output_path}/func/CSF_thr_${run}
 echo "done extracting CSF"
 
-fsl_regfilt -i  ${output_path}/func/Prestats_AROMA_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -d  ${output_path}/func/WM_AROMA_${run}.txt -o ${output_path}/func/WM_${run}_AROMA -f "1"
+fsl_regfilt -i  ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat/ICA_AROMA/denoised_func_data_nonaggr -d  ${output_path}/func/WM_AROMA_${run}.txt -o ${output_path}/func/WM_${run}_AROMA -f "1"
 echo "done regressing out WM"
 
 fsl_regfilt -i  ${output_path}/func/WM_${run}_AROMA -d  ${output_path}/func/CSF_AROMA_${run}.txt -o ${output_path}/func/AROMA_${run} -f "1"
@@ -188,8 +188,8 @@ fslmaths ${output_path}/func/${run}_AROMA_hptf.nii.gz -add ${output_path}/func/t
 rm -f ${output_path}/func/tempMean.nii.gz ${output_path}/func/AROMA_${run}.nii.gz
 
 # Transform bandpassed and highpassed data to MNI space
-flirt -in ${output_path}/func/${run}_AROMA_bptf -ref ${scripts_dir}/MNI152_T1_2mm_brain -out ${output_path}/func/${run}_AROMA_MNI_bptf -applyxfm -init ${output_path}/func/Prestats_AROMA_${run}.feat/reg/example_func2standard.mat -interp trilinear
-flirt -in ${output_path}/func/${run}_AROMA_hptf -ref ${scripts_dir}/MNI152_T1_2mm_brain -out ${output_path}/func/${run}_AROMA_MNI_hptf -applyxfm -init ${output_path}/func/Prestats_AROMA_${run}.feat/reg/example_func2standard.mat -interp trilinear
+flirt -in ${output_path}/func/${run}_AROMA_bptf -ref ${scripts_dir}/MNI152_T1_2mm_brain -out ${output_path}/func/${run}_AROMA_MNI_bptf -applyxfm -init ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat/reg/example_func2standard.mat -interp trilinear
+flirt -in ${output_path}/func/${run}_AROMA_hptf -ref ${scripts_dir}/MNI152_T1_2mm_brain -out ${output_path}/func/${run}_AROMA_MNI_hptf -applyxfm -init ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat/reg/example_func2standard.mat -interp trilinear
 echo "done transforming preprocessed data to standard space for ${sub} ${session} ${run}"
 
 # Compute percent signal change on highpassed MNI data
