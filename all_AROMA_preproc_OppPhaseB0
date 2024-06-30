@@ -112,6 +112,15 @@ echo "TE is ${te} ms"
 dwell=($(jq -r .EffectiveEchoSpacing ${func_path}/${json_file}))
 dwell=`python3 -c "print ($dwell*1000 )"`
 echo "EPI dwell time is ${dwell} ms" 
+# Get phase direction (for unwarping)
+if [[ $run =~ "acq-AP" ]]; then
+	echo "this is an AP run"
+	unwarp_dir=y-	
+fi
+if [[ $run =~ "acq-PA" ]]; then
+	echo "this is a PA run"	
+	unwarp_dir=y
+fi
 # Get TR and volumes
 tr=`fslinfo ${func_path}/${run} | grep "^pixdim4" | awk '{print $2}'`
 echo "TR = ${tr}"
@@ -119,6 +128,7 @@ volumes=`fslinfo ${func_path}/${run} | grep "^dim4" | awk '{print $2}'`
 echo "n volumes = ${volumes}"
 cp ${Prestats_AROMA} ${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf
 sed -i " " "s/####RUNNUM####/${runnum}/g" "${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf"
+sed -i " " "s/####UNWARPDIR####/${unwarp_dir}/g" "${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf"
 sed -i " " "s/####TE####/${te}/g" "${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf"
 sed -i " " "s/####DWELL####/${dwell}/g" "${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf"
 sed -i " " "s/####TR####/${tr}/g" "${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf"

@@ -91,7 +91,7 @@ set fmri(te) ####TE####
 set fmri(signallossthresh) 10
 
 # Unwarp direction
-set fmri(unwarp_dir) y-
+set fmri(unwarp_dir) ####UNWARPDIR####
 
 # Slice timing correction
 # 0 : None
