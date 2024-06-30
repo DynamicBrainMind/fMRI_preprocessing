@@ -72,9 +72,9 @@ echo "output path is set to $output_path"
 
 ## Segment T1 into WM, CSF, GM (if not already done)
 if [ ! -f ${anat_output}/anat_brain.nii.gz ]; then
-	cp ${anat_file} ${anat_output}/anat
-	echo "performing brain extraction for ${sub}"
 	anat_file=`find ${anat_path} -name "*.nii*"`
+	cp ${anat_file} ${anat_output}/anat.nii.gz
+	echo "performing brain extraction for ${sub}"
 	bet ${anat_file} ${anat_output}/anat_brain -B -f 0.25 -g 0
 	echo "performing FAST segmentation for ${sub}"
 	fast -t 1 -g -o ${anat_output}/anat_brain.nii.gz
