@@ -10,7 +10,7 @@
 PATH="/Users/ak4379/Documents/project/scripts/fMRI_preprocessing:${PATH}"
 PATH="/Users/ak4379/Documents/project/scripts/fMRI_preprocessing/iProc:${PATH}"
 
-- After adding those lines to your bash startup, test setup by opening a terminal and typing "all_AROMA_preproc_singleSess" which you should output instructions for this function
+- After adding those lines to your bash startup, test setup by opening a terminal and typing "all_AROMA_preproc" which you should output instructions for this function
 
 **Required software**
 - Required: [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation), python2.7 (+numpy), and [niimath](https://github.com/rordenlab/niimath)
