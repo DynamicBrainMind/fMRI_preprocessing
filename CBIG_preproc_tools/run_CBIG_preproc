@@ -22,6 +22,7 @@ usage() {
 	echo "(a) Make sure that matlab can be called from the terminal (edit .bashrc or .bash_profile if needed)"
 	echo "(b) Copy code from CBIG_preproc_tested_startup.m (from CBIG repo) into Matlab startup.m file"
 	echo "(c) Edit your .bashrc or .bash_profile to set path to CBIG_preproc_tools folder pulled to your system"
+	echo "(d) set up your CBIG config .csh file with paths specified for all software (see CBIG repo for example)"
 	echo ""
 	echo "Before running this, you must do the following (set up once FOR EACH PROJECT):"
 	echo "(a) manually configure your fmrinii.txt file with paths and all fMRI runs specified for your project/dataset; to do so, specify a ####SUBJECT#### variable and if multi-session data, a ####SESSION#### variable"
