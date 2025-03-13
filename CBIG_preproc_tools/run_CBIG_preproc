@@ -27,6 +27,9 @@ usage() {
 	echo "Before running this, you must do the following (set up once FOR EACH PROJECT):"
 	echo "(a) manually configure your fmrinii.txt file with paths and all fMRI runs specified for your project/dataset; to do so, specify a ####SUBJECT#### variable and if multi-session data, a ####SESSION#### variable"
 	echo ""
+	echo "Before running this, you must do the following (set up once FOR EACH SUBJECT):"
+	echo "(a) use run_recon function to reconstruct cortical surface with freesurfer"
+	echo ""
 }
 
 if [[ $# -eq 0 ]] ; then
