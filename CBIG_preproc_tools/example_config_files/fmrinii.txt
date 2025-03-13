@@ -1,0 +1,8 @@
+001 /Users/ak4379/Documents/data/R21-rt-fMRI/bids_data/####SUBJECT####/func/####SUBJECT####_task-GradCPT_run-001_bold.nii.gz
+002 /Users/ak4379/Documents/data/R21-rt-fMRI/bids_data/####SUBJECT####/func/####SUBJECT####_task-resting_run-001_bold.nii.gz
+003 /Users/ak4379/Documents/data/R21-rt-fMRI/bids_data/####SUBJECT####/func/####SUBJECT####_task-ExperienceSampling_run-001_bold.nii.gz
+004 /Users/ak4379/Documents/data/R21-rt-fMRI/bids_data/####SUBJECT####/func/####SUBJECT####_task-ExperienceSampling_run-002_bold.nii.gz
+005 /Users/ak4379/Documents/data/R21-rt-fMRI/bids_data/####SUBJECT####/func/####SUBJECT####_task-ExperienceSampling_run-003_bold.nii.gz
+006 /Users/ak4379/Documents/data/R21-rt-fMRI/bids_data/####SUBJECT####/func/####SUBJECT####_task-ExperienceSampling_run-004_bold.nii.gz
+007 /Users/ak4379/Documents/data/R21-rt-fMRI/bids_data/####SUBJECT####/func/####SUBJECT####_task-ExperienceSampling_run-005_bold.nii.gz
+008 /Users/ak4379/Documents/data/R21-rt-fMRI/bids_data/####SUBJECT####/func/####SUBJECT####_task-ExperienceSampling_run-006_bold.nii.gz

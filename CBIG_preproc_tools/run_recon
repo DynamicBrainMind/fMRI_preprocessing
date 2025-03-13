@@ -1,0 +1,47 @@
+#! /bin/bash
+
+usage() {
+    echo ""
+	echo "run_recon <bids_folder> <subject_name> <session_name>"
+	echo ""
+	echo "3 inputs required: (1) bids path; (2) subject; (3) session name (required for multi-session data; otherwise leave blank)"
+	echo ""
+}
+
+if [[ $# -eq 0 ]] ; then
+	usage
+	exit
+fi
+
+bids_path="$1"
+sub="$2"
+sess=${3:-1}  
+
+# set up input/output folders
+path=`echo ${bids_path%/*}`
+derivs_folder=${path}/derivatives
+mkdir -p ${derivs_folder}
+mkdir -p ${derivs_folder}/freesurfer
+mkdir -p ${derivs_folder}/${sub}
+
+if [ $sess == 1 ]; then
+	mkdir -p ${derivs_folder}/${sub}/anat
+	input_path=${bids_path}/${sub}/anat
+	output_path=${derivs_folder}/${sub}/anat
+	anat_file=${sub}_T1w
+	anat_fullpath=${bids_path}/${sub}/anat/${anat_file}.nii.gz
+else
+	mkdir -p ${derivs_folder}/${sub}/${sess}
+	mkdir -p ${derivs_folder}/${sub}/${sess}/anat
+	input_path=${bids_path}/${sub}/${sess}/anat
+	output_path=${derivs_folder}/${sub}/${sess}/anat
+	anat_file=${sub}_${sess}_T1w
+	anat_fullpath=${bids_path}/${sub}/${sess}/anat/${anat_file}.nii.gz
+fi
+
+echo "anat file for recon is ${anat_fullpath}"
+echo "output will be saved at ${derivs_folder}/freesurfer/${sub}"
+
+# Run recon-all
+recon-all -s ${sub} -i ${anat_fullpath} -sd ${derivs_folder}/freesurfer -all -localGI
+
