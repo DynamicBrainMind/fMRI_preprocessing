@@ -1,9 +1,5 @@
 #! /bin/bash -f
 
-# First, in terminal type "csh"
-# Then "source CBIG_preproc_config_aaron.csh"
-# Then run this 
-
 usage() {
 	echo ""
 	echo "run_CBIG_preproc <bids_folder> <subject_name> <session_name> <fmrinii .txt file> <cbig preproc config .txt file> <cbig config .csh file>"
