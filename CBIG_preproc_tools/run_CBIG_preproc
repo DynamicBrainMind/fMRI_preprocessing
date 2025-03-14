@@ -8,9 +8,9 @@ usage() {
 	echo "(1) bids path (containing subject folders)"
 	echo "(2) subject name"
 	echo "(3) session name (if single session, call it ses-001)"
-	echo "(4) fmrinii.txt file configured for this dataset (see CBIG repo for examples)"
-	echo "(5) .txt file with CBIG preproc parameters specified (see CBIG repo for examples)"
-	echo "(6) CBIG config file (.csh) for this system (see CBIG repo for examples)" 
+	echo "(4) fmrinii.txt file configured for this dataset (see 'example_config_files')"
+	echo "(5) .txt file with CBIG preproc parameters specified (see 'example_config_files')"
+	echo "(6) CBIG config file (.csh) for this system (see 'example_config_files')" 
 	echo ""
 	echo "Example: run_CBIG_preproc ~/Documents/data/R21-rt-fMRI/bids_data sub-001 ses-001 fmrinii.txt mshbm_preproc_config.txt CBIG_preproc_config_aaron.csh"
 	echo ""
@@ -62,6 +62,6 @@ sed -i " " "s/####SESSION####/${sess}/g" "${fmrinii_path}/fmrinii_${sess}.txt"
 # run CBIG preprocessing
 #! /bin/tcsh -f
 csh -c "source ${cbig_config}; CBIG_preproc_fMRI_preprocess.csh -s ${sub} -fmrinii ${fmrinii_path}/fmrinii_${sess}.txt -anat_s ${sub} -anat_d ${derivs_folder}/freesurfer -output_d ${derivs_folder}/CBIG_preproc/${sub}/${sess} -config ${mshbm_preproc_config}"
-rm -f fmrinii_${sess}.txt
+rm -f ${fmrinii_path}/fmrinii_${sess}.txt
 echo "done preprocessing for ${sub} ${sess}"
 
