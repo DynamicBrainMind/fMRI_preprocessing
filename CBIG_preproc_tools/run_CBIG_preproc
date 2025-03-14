@@ -67,13 +67,4 @@ sed -i " " "s/####SESSION####/${sess}/g" "${fmrinii_path}/fmrinii_${sess}.txt"
 csh -c "source ${cbig_config}; CBIG_preproc_fMRI_preprocess.csh -s ${sub} -fmrinii ${fmrinii_path}/fmrinii_${sess}.txt -anat_s ${sub} -anat_d ${derivs_folder}/freesurfer -output_d ${derivs_folder}/CBIG_preproc/${sub}/${sess} -config ${mshbm_preproc_config}"
 rm -f fmrinii_${sess}.txt
 echo "done preprocessing for ${sub} ${sess}"
- 
-# delete unneeded outputs
-#foreach run (001 002 003 004)
-	#foreach sess (ses-001 ses-002)
-	#	rm -f /Users/ak4379/neurodesktop-storage/data/R21_EEG-fMRI/derivatives/CBIG_preproc/${sub}/${sess}/${sub}/surf/lh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6.nii.gz
-	#	rm -f /Users/ak4379/neurodesktop-storage/data/R21_EEG-fMRI/derivatives/CBIG_preproc/${sub}/${sess}/${sub}/surf/lh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6_sm6_fs5.nii.gz
-	#	rm -f /Users/ak4379/neurodesktop-storage/data/R21_EEG-fMRI/derivatives/CBIG_preproc/${sub}/${sess}/${sub}/surf/rh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6.nii.gz
-	#	rm -f /Users/ak4379/neurodesktop-storage/data/R21_EEG-fMRI/derivatives/CBIG_preproc/${sub}/${sess}/${sub}/surf/rh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6_sm6_fs5.nii.gz
-	#	rm -r -f /Users/ak4379/neurodesktop-storage/data/R21_EEG-fMRI/derivatives/CBIG_preproc/${sub}/${sess}/${sub}/bold/${run}
 
