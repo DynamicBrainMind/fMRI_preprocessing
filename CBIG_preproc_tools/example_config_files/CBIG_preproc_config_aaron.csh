@@ -7,7 +7,7 @@ if( $?FREESURFER_HOME ) then
 endif
 
 # PLEASE CHANGE: Please specify location of CBIG repository
-setenv CBIG_CODE_DIR /Users/ak4379/Documents/scripts/CBIG_aaron
+setenv CBIG_CODE_DIR /Users/ak4379/Documents/scripts/CBIGs
 
 # PLEASE CHANGE: define locations for these libraries
 setenv FREESURFER_HOME /Applications/freesurfer/7.4.1
@@ -17,7 +17,7 @@ setenv CBIG_AFNI_DIR   /Users/ak4379/abin
 setenv CBIG_ANTS_DIR   /Users/ak4379/ANTs/bin/
 setenv CBIG_WB_DIR     /Applications/workbench
 setenv CBIG_FSLDIR     /usr/local/fsl
-setenv SUBJECTS_DIR	/Users/ak4379/Documents/data/R21_EEG-fMRI/derivatives/freesurfer
+setenv SUBJECTS_DIR	/Users/ak4379/Documents/data/R21-rt-fMRI/derivatives/freesurfer
 
 # DO NOT CHANGE: set up your environment with the configurations above
 #set SETUP_PATH = $CBIG_CODE_DIR/setup/CBIG_generic_setup.csh
