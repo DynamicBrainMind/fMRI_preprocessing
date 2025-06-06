@@ -64,6 +64,13 @@ fi
 echo "path to subject/session is $1/$2"
 echo "output path is set to $output_path"
 
+# Check OS (for adjusting commands below accordingly)
+OS=`uname`
+if [ $OS == Linux]
+	linux_os=`lsb_release -i | awk '{print $3}'`
+	echo "OS is ${linux_os}"
+fi
+
 ## Segment T1 into WM, CSF, GM (if not already done)
 if [ ! -f ${anat_output}/anat_brain.nii.gz ]; then
 	cp ${anat_file} ${anat_output}/anat
