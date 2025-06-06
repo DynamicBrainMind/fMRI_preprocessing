@@ -66,9 +66,11 @@ echo "output path is set to $output_path"
 
 # Check OS (for adjusting commands below accordingly)
 OS=`uname`
-if [ $OS == Linux]; then
+if [ "$OS" == "Linux"]; then
 	linux_os=`lsb_release -i | awk '{print $3}'`
 	echo "OS is ${linux_os}"
+else
+	echo "OS is not Linux"
 fi
 
 ## Segment T1 into WM, CSF, GM (if not already done)
