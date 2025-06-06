@@ -102,7 +102,7 @@ echo "TR = ${tr}"
 volumes=`fslinfo ${func_path}/${run} | grep "^dim4" | awk '{print $2}'`
 echo "n volumes = ${volumes}"
 cp ${Prestats_AROMA} ${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf
-if [ "$linux_s" == "RedHatEnterprise" ]; then
+if [ "$linux_os" == "RedHatEnterprise" ]; then
 	sed -i "s/####TR####/${tr}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
 	sed -i "s/####VOLUMES####/${volumes}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
 	sed -i "s/####RUN####/${run}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
