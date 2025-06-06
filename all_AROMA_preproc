@@ -70,6 +70,7 @@ if [ "$OS" == "Linux" ]; then
 	linux_os=`lsb_release -i | awk '{print $3}'`
 	echo "OS is ${linux_os}"
 else
+	linux_os="not linux"
 	echo "OS is not Linux"
 fi
 
@@ -101,13 +102,23 @@ echo "TR = ${tr}"
 volumes=`fslinfo ${func_path}/${run} | grep "^dim4" | awk '{print $2}'`
 echo "n volumes = ${volumes}"
 cp ${Prestats_AROMA} ${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf
-sed -i " " "s/####TR####/${tr}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-sed -i " " "s/####VOLUMES####/${volumes}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-sed -i " " "s/####RUN####/${run}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-sed -i " " "s+####OUTPUTPATH####+${output_path}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-sed -i " " "s+####STANDARD####+${scripts_dir}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-sed -i " " "s+####FUNCDIR####+${func_path}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
-sed -i " " "s+####ANATDIR####+${anat_output}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+if [ "$linux_s" == "RedHatEnterprise" ]; then
+	sed -i "s/####TR####/${tr}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+	sed -i "s/####VOLUMES####/${volumes}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+	sed -i "s/####RUN####/${run}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+	sed -i "s+####OUTPUTPATH####+${output_path}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+	sed -i "s+####STANDARD####+${scripts_dir}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+	sed -i "s+####FUNCDIR####+${func_path}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+	sed -i "s+####ANATDIR####+${anat_output}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+else
+	sed -i " " "s/####TR####/${tr}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+	sed -i " " "s/####VOLUMES####/${volumes}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+	sed -i " " "s/####RUN####/${run}/g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+	sed -i " " "s+####OUTPUTPATH####+${output_path}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+	sed -i " " "s+####STANDARD####+${scripts_dir}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+	sed -i " " "s+####FUNCDIR####+${func_path}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+	sed -i " " "s+####ANATDIR####+${anat_output}+g" "${output_path}/func/${sub}_Prestats_AROMA_${run}.fsf"
+fi
 echo "done making FEAT setup for ${sub} ${run}"
 
 ## Run FEAT for pre-AROMA
