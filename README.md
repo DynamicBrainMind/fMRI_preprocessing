@@ -13,14 +13,11 @@ PATH="/Users/ak4379/Documents/project/scripts/fMRI_preprocessing/iProc:${PATH}"
 - After adding those lines to your bash startup, test setup by opening a terminal and typing "all_AROMA_preproc" which you should output instructions for this function
 
 **Required software**
-- Required: [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation), python2.7 (+numpy), and [niimath](https://github.com/rordenlab/niimath)
-- Note: If you have multiple versions of python installed, you can install numpy for version 2.7 by typing "python2.7 -m pip install numpy" in terminal
+- Required: [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation), python3, and [niimath](https://github.com/rordenlab/niimath)
+- A few python3 packages are needed, which can be found in requirements.txt file in ICA-AROMA directory. Type "pip install -r requirements.txt" in terminal to install.
 	
 **Running the scripts**
-- **all_AROMA_preproc** runs ICA-AROMA preprocessing on fMRI data in BIDS or BIDS-like format (for subjects who have just one session in the BIDS folder).
-- In iProc folder, there are scripts for more optimal processing of individual subjects with multiple sessions:
--    **step1_run_alignment_onesub** creates common fMRI template across all sessions/runs and registers each run to it (+performs motion correction)
--    **step2_ICA_AROMA_iProc_onesession** runs ICA-AROMA (plus regression of thresholded white matter and CSF)
--    **step3_highpass_register_onesession** runs highpass filtering (0.01 Hz cutoff), bandpass (0.01 - 0.1 Hz) filtering, and registration to MNI space, plus conversion to % signal change (for high-pass filtered data)
+- **all_AROMA_preproc** is the main function that runs ICA-AROMA preprocessing on fMRI data in BIDS or BIDS-like format.
+- **all_AROMA_preproc_OppPhaseB0** includes field map correction step when opposite-phase B0 images are available. This requires an acq_params.txt file as additional input; see [here](https://web.mit.edu/fsl_v5.0.10/fsl/doc/wiki/topup(2f)TopupUsersGuide.html) for more details.
 
 
