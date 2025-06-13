@@ -70,6 +70,16 @@ fi
 echo "path to subject/session is $1/$2"
 echo "output path is set to $output_path"
 
+# Check OS (for adjusting commands below accordingly)
+OS=`uname`
+if [ "$OS" == "Linux" ]; then
+	linux_os=`lsb_release -i | awk '{print $3}'`
+	echo "OS is ${linux_os}"
+else
+	linux_os="not linux"
+	echo "OS is not Linux"
+fi
+
 ## Segment T1 into WM, CSF, GM (if not already done)
 if [ ! -f ${anat_output}/anat_brain.nii.gz ]; then
 	anat_file=`find ${anat_path} -name "*.nii*"`
@@ -146,7 +156,7 @@ feat ${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf
 echo "done FEAT for AROMA pipeline, ${sub} ${run}: check registration and motion"
 
 # Run ICA
-python2.7 ${scripts_dir}/ICA-AROMA-master/ICA_AROMA.py -feat ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat -out ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat/ICA_AROMA
+python ${scripts_dir}/ICA-AROMA/ICA_AROMA.py -feat ${output_path}/func/Prestats_AROMA_${run}.feat -out ${output_path}/func/Prestats_AROMA_${run}.feat/ICA_AROMA
 echo "done ICA for ${sub} ${run}"
 
 ## Threshold WM and CSF volumes (set WM and CSF volumes to 198000 and 20000)
