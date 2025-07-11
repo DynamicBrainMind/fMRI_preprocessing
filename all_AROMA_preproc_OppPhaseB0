@@ -156,7 +156,7 @@ feat ${output_path}/func/${sub}_Prestats_AROMA_oppPhaseB0_${run}.fsf
 echo "done FEAT for AROMA pipeline, ${sub} ${run}: check registration and motion"
 
 # Run ICA
-python ${scripts_dir}/ICA-AROMA/ICA_AROMA.py -feat ${output_path}/func/Prestats_AROMA_${run}.feat -out ${output_path}/func/Prestats_AROMA_${run}.feat/ICA_AROMA
+python ${scripts_dir}/ICA-AROMA/ICA_AROMA.py -feat ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat -out ${output_path}/func/Prestats_AROMA_oppPhaseB0_${run}.feat/ICA_AROMA
 echo "done ICA for ${sub} ${run}"
 
 ## Threshold WM and CSF volumes (set WM and CSF volumes to 198000 and 20000)
