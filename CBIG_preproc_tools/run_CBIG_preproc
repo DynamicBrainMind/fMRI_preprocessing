@@ -42,9 +42,9 @@ mshbm_preproc_config=`realpath "$5"`
 cbig_config=`realpath "$6"`
  
 # set up input/output folders
-if [ $sess != 1 ]; then
-	sess=ses-01
-fi
+#if [ $sess != 1 ]; then
+#	sess=ses-01
+#fi
 path=`echo ${bids_path%/*}`
 derivs_folder=${path}/derivatives
 mkdir -p ${derivs_folder}
