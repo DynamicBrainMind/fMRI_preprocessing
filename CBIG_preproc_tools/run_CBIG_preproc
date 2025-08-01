@@ -52,12 +52,27 @@ mkdir -p ${derivs_folder}/CBIG_preproc
 mkdir -p ${derivs_folder}/CBIG_preproc/${sub}
 mkdir -p ${derivs_folder}/CBIG_preproc/${sub}/${sess}
 
+# Check OS (for adjusting commands below accordingly)
+OS=`uname`
+if [ "$OS" == "Linux" ]; then
+	linux_os=`lsb_release -i | awk '{print $3}'`
+	echo "OS is ${linux_os}"
+else
+	linux_os="not linux"
+	echo "OS is not Linux"
+fi
+
 # set up fmrinii.txt file (with runs/paths specified)
 fmrinii_path=`echo ${fmrinii%/*}`
 echo "fmriniipath is ${fmrinii_path}"
 cp ${fmrinii} ${fmrinii_path}/fmrinii_${sess}.txt
-sed -i " " "s/####SUBJECT####/${sub}/g" "${fmrinii_path}/fmrinii_${sess}.txt"
-sed -i " " "s/####SESSION####/${sess}/g" "${fmrinii_path}/fmrinii_${sess}.txt"
+if [ "$linux_os" == "RedHatEnterprise" ]; then
+	sed -i "s/####SUBJECT####/${sub}/g" "${fmrinii_path}/fmrinii_${sess}.txt"
+	sed -i "s/####SESSION####/${sess}/g" "${fmrinii_path}/fmrinii_${sess}.txt"
+else
+	sed -i " " "s/####SUBJECT####/${sub}/g" "${fmrinii_path}/fmrinii_${sess}.txt"
+	sed -i " " "s/####SESSION####/${sess}/g" "${fmrinii_path}/fmrinii_${sess}.txt"
+fi
 
 # run CBIG preprocessing
 #! /bin/tcsh -f
