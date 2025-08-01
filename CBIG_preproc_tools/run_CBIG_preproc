@@ -76,7 +76,7 @@ fi
 
 # run CBIG preprocessing
 #! /bin/tcsh -f
-csh -c "source ${cbig_config}; CBIG_preproc_fMRI_preprocess.csh -s ${sub} -fmrinii ${fmrinii_path}/fmrinii_${sess}.txt -anat_s ${sub} -anat_d ${derivs_folder}/freesurfer -output_d ${derivs_folder}/CBIG_preproc/${sub}/${sess} -config ${mshbm_preproc_config}"
+csh -c "source ${cbig_config}; CBIG_preproc_fMRI_preprocess.csh -s ${sub} -fmrinii ${fmrinii_path}/fmrinii_${sess}.txt -anat_s ${sub} -anat_d ${derivs_folder}/freesurfer/subjects -output_d ${derivs_folder}/CBIG_preproc/${sub}/${sess} -config ${mshbm_preproc_config}"
 rm -f ${fmrinii_path}/fmrinii_${sess}.txt
 echo "done preprocessing for ${sub} ${sess}"
 
