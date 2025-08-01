@@ -65,7 +65,8 @@ fi
 # set up fmrinii.txt file (with runs/paths specified)
 fmrinii_path=`echo ${fmrinii%/*}`
 echo "fmriniipath is ${fmrinii_path}"
-cp ${fmrinii} ${fmrinii_path}/fmrinii_${sess}.txt
+mkdir -p ${fmrinii_path}/fmrinii_files
+cp ${fmrinii} ${fmrinii_path}/fmrinii_${sub}_${sess}.txt
 if [ "$linux_os" == "RedHatEnterprise" ]; then
 	sed -i "s/####SUBJECT####/${sub}/g" "${fmrinii_path}/fmrinii_${sess}.txt"
 	sed -i "s/####SESSION####/${sess}/g" "${fmrinii_path}/fmrinii_${sess}.txt"
@@ -77,6 +78,15 @@ fi
 # run CBIG preprocessing
 #! /bin/tcsh -f
 csh -c "source ${cbig_config}; CBIG_preproc_fMRI_preprocess.csh -s ${sub} -fmrinii ${fmrinii_path}/fmrinii_${sess}.txt -anat_s ${sub} -anat_d ${derivs_folder}/freesurfer/subjects -output_d ${derivs_folder}/CBIG_preproc/${sub}/${sess} -config ${mshbm_preproc_config}"
-rm -f ${fmrinii_path}/fmrinii_${sess}.txt
+mv ${fmrinii_path}/fmrinii_${sub}_${sess}.txt ${fmrinii_path}/fmrinii_files
 echo "done preprocessing for ${sub} ${sess}"
 
+# delete unneeded outputs
+for run in 001 002 003 004 005 006 007 008
+do
+	rm -f ${derivs_folder}/CBIG_preproc/${sub}/${sess}/${sub}/surf/lh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6.nii.gz
+	rm -f ${derivs_folder}/CBIG_preproc/${sub}/${sess}/${sub}/surf/lh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6_sm6_fs5.nii.gz
+	rm -f ${derivs_folder}/CBIG_preproc/${sub}/${sess}/${sub}/surf/rh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6.nii.gz
+	rm -f ${derivs_folder}/CBIG_preproc/${sub}/${sess}/${sub}/surf/rh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6_sm6_fs5.nii.gz
+	rm -r -f ${derivs_folder}/CBIG_preproc/${sub}/${sess}/${sub}/bold/${run}
+done
