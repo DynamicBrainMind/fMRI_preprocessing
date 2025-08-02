@@ -68,16 +68,16 @@ echo "fmriniipath is ${fmrinii_path}"
 mkdir -p ${fmrinii_path}/fmrinii_files
 cp ${fmrinii} ${fmrinii_path}/fmrinii_${sub}_${sess}.txt
 if [ "$linux_os" == "RedHatEnterprise" ]; then
-	sed -i "s/####SUBJECT####/${sub}/g" "${fmrinii_path}/fmrinii_${sess}.txt"
-	sed -i "s/####SESSION####/${sess}/g" "${fmrinii_path}/fmrinii_${sess}.txt"
+	sed -i "s/####SUBJECT####/${sub}/g" "${fmrinii_path}/fmrinii_${sub}_${sess}.txt"
+	sed -i "s/####SESSION####/${sess}/g" "${fmrinii_path}/fmrinii_${sub}_${sess}.txt"
 else
-	sed -i " " "s/####SUBJECT####/${sub}/g" "${fmrinii_path}/fmrinii_${sess}.txt"
-	sed -i " " "s/####SESSION####/${sess}/g" "${fmrinii_path}/fmrinii_${sess}.txt"
+	sed -i " " "s/####SUBJECT####/${sub}/g" "${fmrinii_path}/fmrinii_${sub}_${sess}.txt"
+	sed -i " " "s/####SESSION####/${sess}/g" "${fmrinii_path}/fmrinii_${sub}_${sess}.txt"
 fi
 
 # run CBIG preprocessing
 #! /bin/tcsh -f
-csh -c "source ${cbig_config}; CBIG_preproc_fMRI_preprocess.csh -s ${sub} -fmrinii ${fmrinii_path}/fmrinii_${sess}.txt -anat_s ${sub} -anat_d ${derivs_folder}/freesurfer/subjects -output_d ${derivs_folder}/CBIG_preproc/${sub}/${sess} -config ${mshbm_preproc_config}"
+csh -c "source ${cbig_config}; CBIG_preproc_fMRI_preprocess.csh -s ${sub} -fmrinii ${fmrinii_path}/fmrinii_${sub}_${sess}.txt -anat_s ${sub} -anat_d ${derivs_folder}/freesurfer/subjects -output_d ${derivs_folder}/CBIG_preproc/${sub}/${sess} -config ${mshbm_preproc_config}"
 mv ${fmrinii_path}/fmrinii_${sub}_${sess}.txt ${fmrinii_path}/fmrinii_files
 echo "done preprocessing for ${sub} ${sess}"
 
