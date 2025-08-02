@@ -4,25 +4,25 @@ usage() {
 	echo ""
 	echo "run_CBIG_preproc <bids_folder> <subject_name> <session_name> <fmrinii .txt file> <cbig preproc config .txt file> <cbig config .csh file>"
 	echo ""
-	echo "6 inputs required, and you MUST RUN THIS FROM THE PATH THAT CONTAINS THE LAST 3 INPUT FILES"
+	echo "7 inputs required, and you MUST RUN THIS FROM THE PATH THAT CONTAINS THE LAST 3 INPUT FILES"
 	echo "(1) bids path (containing subject folders)"
 	echo "(2) subject name"
 	echo "(3) session name (if single session, call it ses-001)"
 	echo "(4) fmrinii.txt file configured for this dataset (see 'example_config_files')"
 	echo "(5) .txt file with CBIG preproc parameters specified (see 'example_config_files')"
 	echo "(6) CBIG config file (.csh) for this system (see 'example_config_files')" 
+	echo "(7) name of output folder (will show up in derivatives directory)"
 	echo ""
-	echo "Example: run_CBIG_preproc ~/Documents/data/R21-rt-fMRI/bids_data sub-001 ses-001 fmrinii.txt mshbm_preproc_config.txt CBIG_preproc_config_aaron.csh"
+	echo "Example: run_CBIG_preproc ~/Documents/data/R21-rt-fMRI/bids_data sub-001 ses-001 fmrinii.txt mshbm_preproc_config.txt CBIG_preproc_config_aaron.csh CBIG_preproc"
 	echo ""
 	echo "Before running this, you must do the following (set up once FOR EACH SYSTEM):"
 	echo "(a) Make sure that matlab can be called from the terminal (edit .bashrc or .bash_profile if needed)"
 	echo "(b) Pull the CBIG repo to your system: https://github.com/ThomasYeoLab/CBIG.git"
-	echo "(c) Copy code from CBIG_preproc_tested_startup.m (from CBIG repo) into your Matlab startup.m file"
-	echo "(d) Edit your .bashrc or .bash_profile to set path to this function (i.e., fMRI_preprocessing/CBIG_preproc_tools)"
+	echo "(c) Edit your .bashrc or .bash_profile to set path to this function (i.e., fMRI_preprocessing/CBIG_preproc_tools)"
 	echo ""
 	echo "Before running this, you must do the following (set up once FOR EACH PROJECT):"
 	echo "(a) manually configure your fmrinii.txt file with paths and all fMRI runs specified for your project/dataset; to do so, specify a ####SUBJECT#### variable and if multi-session data, a ####SESSION#### variable"
-	echo "(b) set up your CBIG config .csh file with paths specified for all software (see CBIG repo for example); note that freesurfer folder should be within derivatives/freesurfer location, which is specific to each project"
+	echo "(b) set up your CBIG config .csh file with paths specified for all software (see CBIG repo for example); note that recon-all outputs should be within derivatives/freesurfer/subjects location, which is specific to each project"
 	echo ""
 	echo "Before running this, you must do the following (set up once FOR EACH SUBJECT):"
 	echo "(a) use run_recon function to reconstruct cortical surface with freesurfer"
@@ -40,6 +40,7 @@ sess=${3:-1}
 fmrinii=`realpath "$4"`
 mshbm_preproc_config=`realpath "$5"`
 cbig_config=`realpath "$6"`
+outname="$7"
  
 # set up input/output folders
 #if [ $sess != 1 ]; then
@@ -48,9 +49,9 @@ cbig_config=`realpath "$6"`
 path=`echo ${bids_path%/*}`
 derivs_folder=${path}/derivatives
 mkdir -p ${derivs_folder}
-mkdir -p ${derivs_folder}/CBIG_preproc
-mkdir -p ${derivs_folder}/CBIG_preproc/${sub}
-mkdir -p ${derivs_folder}/CBIG_preproc/${sub}/${sess}
+mkdir -p ${derivs_folder}/${outname}
+mkdir -p ${derivs_folder}/${outname}/${sub}
+mkdir -p ${derivs_folder}/${outname}/${sub}/${sess}
 
 # Check OS (for adjusting commands below accordingly)
 OS=`uname`
@@ -77,16 +78,16 @@ fi
 
 # run CBIG preprocessing
 #! /bin/tcsh -f
-csh -c "source ${cbig_config}; CBIG_preproc_fMRI_preprocess.csh -s ${sub} -fmrinii ${fmrinii_path}/fmrinii_${sub}_${sess}.txt -anat_s ${sub} -anat_d ${derivs_folder}/freesurfer/subjects -output_d ${derivs_folder}/CBIG_preproc/${sub}/${sess} -config ${mshbm_preproc_config}"
+csh -c "source ${cbig_config}; CBIG_preproc_fMRI_preprocess.csh -s ${sub} -fmrinii ${fmrinii_path}/fmrinii_${sub}_${sess}.txt -anat_s ${sub} -anat_d ${derivs_folder}/freesurfer/subjects -output_d ${derivs_folder}/${outname}/${sub}/${sess} -config ${mshbm_preproc_config}"
 mv ${fmrinii_path}/fmrinii_${sub}_${sess}.txt ${fmrinii_path}/fmrinii_files
 echo "done preprocessing for ${sub} ${sess}"
 
 # delete unneeded outputs
-for run in 001 002 003 004 005 006 007 008
+for run in 001 002 003 004 005 006 007 008 009 010
 do
-	rm -f ${derivs_folder}/CBIG_preproc/${sub}/${sess}/${sub}/surf/lh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6.nii.gz
-	rm -f ${derivs_folder}/CBIG_preproc/${sub}/${sess}/${sub}/surf/lh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6_sm6_fs5.nii.gz
-	rm -f ${derivs_folder}/CBIG_preproc/${sub}/${sess}/${sub}/surf/rh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6.nii.gz
-	rm -f ${derivs_folder}/CBIG_preproc/${sub}/${sess}/${sub}/surf/rh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6_sm6_fs5.nii.gz
-	rm -r -f ${derivs_folder}/CBIG_preproc/${sub}/${sess}/${sub}/bold/${run}
+	rm -f ${derivs_folder}/${outname}/${sub}/${sess}/${sub}/surf/lh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6.nii.gz
+	rm -f ${derivs_folder}/${outname}/${sub}/${sess}/${sub}/surf/lh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6_sm6_fs5.nii.gz
+	rm -f ${derivs_folder}/${outname}/${sub}/${sess}/${sub}/surf/rh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6.nii.gz
+	rm -f ${derivs_folder}/${outname}/${sub}/${sess}/${sub}/surf/rh.${sub}_bld${run}_rest_mc_resid_bp_0.01_0.1_fs6_sm6_fs5.nii.gz
+	rm -r -f ${derivs_folder}/${outname}/${sub}/${sess}/${sub}/bold/${run}
 done
