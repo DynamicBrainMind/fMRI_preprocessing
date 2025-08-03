@@ -23,7 +23,6 @@ derivs_folder=${path}/derivatives
 mkdir -p ${derivs_folder}
 mkdir -p ${derivs_folder}/freesurfer
 mkdir -p ${derivs_folder}/freesurfer/subjects
-mkdir -p ${derivs_folder}/freesurfer/subjects/${sub}
 
 if [ $sess == 1 ]; then
 	mkdir -p ${derivs_folder}/${sub}/anat
