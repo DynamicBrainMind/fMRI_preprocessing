@@ -22,7 +22,8 @@ path=`echo ${bids_path%/*}`
 derivs_folder=${path}/derivatives
 mkdir -p ${derivs_folder}
 mkdir -p ${derivs_folder}/freesurfer
-mkdir -p ${derivs_folder}/${sub}
+mkdir -p ${derivs_folder}/freesurfer/subjects
+mkdir -p ${derivs_folder}/freesurfer/subjects/${sub}
 
 if [ $sess == 1 ]; then
 	mkdir -p ${derivs_folder}/${sub}/anat
@@ -40,8 +41,8 @@ else
 fi
 
 echo "anat file for recon is ${anat_fullpath}"
-echo "output will be saved at ${derivs_folder}/freesurfer/${sub}"
+echo "output will be saved at ${derivs_folder}/freesurfer/subjects/${sub}"
 
 # Run recon-all
-recon-all -s ${sub} -i ${anat_fullpath} -sd ${derivs_folder}/freesurfer -all -localGI
+recon-all -s ${sub} -i ${anat_fullpath} -sd ${derivs_folder}/freesurfer/subjects -all -localGI
 
