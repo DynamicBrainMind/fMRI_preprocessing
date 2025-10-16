@@ -93,5 +93,5 @@ do
 	rm -f ${derivs_folder}/${outname}/${sub}/${sess}/${sub}/surf/lh.${sub}_bld${run}_rest_mc_sdc_resid_bp_0.01_0.1_fs6_sm6_fs5.nii.gz
 	rm -f ${derivs_folder}/${outname}/${sub}/${sess}/${sub}/surf/rh.${sub}_bld${run}_rest_mc_sdc_resid_bp_0.01_0.1_fs6.nii.gz
 	rm -f ${derivs_folder}/${outname}/${sub}/${sess}/${sub}/surf/rh.${sub}_bld${run}_rest_mc_sdc_resid_bp_0.01_0.1_fs6_sm6_fs5.nii.gz
-	rm -r -f ${derivs_folder}/${outname}/${sub}/${sess}/${sub}/bold/${run}
+	#rm -r -f ${derivs_folder}/${outname}/${sub}/${sess}/${sub}/bold/${run}
 done
